@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore, type ResourceSummary } from '../core/resources'
+import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore } from '../core/resources'
 import { computeFlows } from '../core/sim'
 import { formatHoursLong, type Speed } from '../core/time'
 import { SIM_CONFIG, useGameStore } from '../state/gameStore'
@@ -51,31 +51,36 @@ function formatNet(perHour: number): string {
   return `${perHour > 0 ? '+' : perHour < 0 ? '−' : '±'}${text}/h`
 }
 
-/** Floating per-hour breakdown: what consumes this resource and what produces it. */
-function FlowBreakdown({ flows, summary }: { flows: Flow[]; summary: ResourceSummary }) {
-  const section = (kind: Flow['kind'], title: string, total: number, empty: string) => {
-    const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
-    return (
-      <>
-        <div className={`usage-tooltip__title usage-tooltip__title--${kind}`}>{title}</div>
-        {items.length === 0 && <span className="muted">{empty}</span>}
-        {items.map((f) => (
-          <div key={f.id} className="usage-tooltip__row">
-            <span className="usage-tooltip__label">{f.label}</span>
-            <span className="usage-tooltip__track">
-              <span className={`usage-tooltip__fill usage-tooltip__fill--${kind}`} style={{ width: `${(f.perHour / (total || 1)) * 100}%` }} />
-            </span>
-            <span className="usage-tooltip__value">{fmt(f.perHour)}/h</span>
-          </div>
-        ))}
-      </>
-    )
-  }
+/** Warm palette for consumers (OUT), green palette for producers (IN). */
+const RATIO_COLORS: Record<Flow['kind'], string[]> = {
+  consumer: ['#ff3b30', '#ff7a45', '#ffa43b', '#ffd166', '#c9302c', '#ff9e80'],
+  producer: ['#39ff6a', '#b4ff5c', '#1fbf5a', '#7dffc0', '#0f8a3a', '#d8ff9e'],
+}
+
+/** macOS-storage-style ratio: one bar split by source, with a legend of amount and share. */
+function RatioBreakdown({ kind, flows, total }: { kind: Flow['kind']; flows: Flow[]; total: number }) {
+  const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
+  const colors = RATIO_COLORS[kind]
   return (
-    <div className="usage-tooltip" role="tooltip">
-      {section('consumer', `Usage · ${fmt(summary.usagePerHour)}/h`, summary.usagePerHour, 'Nothing is consuming this')}
-      <div className="usage-tooltip__divider" />
-      {section('producer', `Production · ${fmt(summary.productionPerHour)}/h`, summary.productionPerHour, 'No production')}
+    <div className={`ratio-tooltip ratio-tooltip--${kind}`} role="tooltip">
+      <div className="ratio-tooltip__title">
+        <span>{kind === 'consumer' ? 'Out · usage' : 'In · production'}</span>
+        <span>{fmt(total)}/h</span>
+      </div>
+      <div className="ratio-bar">
+        {items.map((f, i) => (
+          <span key={f.id} className="ratio-bar__segment" style={{ width: `${(f.perHour / total) * 100}%`, background: colors[i % colors.length] }} />
+        ))}
+      </div>
+      {items.length === 0 && <span className="muted">{kind === 'consumer' ? 'Nothing is consuming this' : 'No production'}</span>}
+      {items.map((f, i) => (
+        <div key={f.id} className="ratio-legend">
+          <span className="ratio-legend__swatch" style={{ background: colors[i % colors.length] }} />
+          <span className="ratio-legend__label">{f.label}</span>
+          <span className="ratio-legend__value">{fmt(f.perHour)}/h</span>
+          <span className="ratio-legend__share">{Math.round((f.perHour / total) * 100)}%</span>
+        </div>
+      ))}
     </div>
   )
 }
@@ -146,7 +151,7 @@ function BudgetGauge({
   const meta = RESOURCES[id]
   const speed = useGameStore((st) => st.speed)
   const s = summarize(id, store, flows)
-  const [showUsage, setShowUsage] = useState(false)
+  const [hovered, setHovered] = useState<Flow['kind'] | null>(null)
   const ghost = useGhost(store.stock, store.capacity * 0.01)
   const hoursLeft = emptyAt === undefined ? Infinity : (emptyAt - minute) / 60
   const level = urgency(store.stock, hoursLeft)
@@ -178,25 +183,33 @@ function BudgetGauge({
         {filling && <div className="stock-bar__charge" style={{ left: pct(store.stock), ...motion }} />}
       </div>
 
-      <div className="flow" onMouseEnter={() => setShowUsage(true)} onMouseLeave={() => setShowUsage(false)} onFocus={() => setShowUsage(true)} onBlur={() => setShowUsage(false)} tabIndex={0}>
-        <div className="flow__row">
-          <span className="flow__label">Out</span>
-          <span className="flow__track">
-            <span className={`flow__fill flow__fill--out${store.stock > 0 && s.usagePerHour > 0 ? ' is-flowing' : ''}`} style={{ width: `${(s.usagePerHour / flowScale) * 100}%`, ...motion }} />
-          </span>
-          <span className="flow__value">{fmt(s.usagePerHour)}/h</span>
-        </div>
-        <div className="flow__row">
-          <span className="flow__label">In</span>
-          <span className="flow__track">
-            <span
-              className={`flow__fill flow__fill--in${s.productionPerHour > 0 ? ' is-flowing' : ''}`}
-              style={{ width: `${(s.productionPerHour / flowScale) * 100}%`, ...motion }}
-            />
-          </span>
-          <span className="flow__value">{fmt(s.productionPerHour)}/h</span>
-        </div>
-        {showUsage && <FlowBreakdown flows={flows} summary={s} />}
+      <div className="flow">
+        {(
+          [
+            { kind: 'consumer', label: 'Out', value: s.usagePerHour, flowing: store.stock > 0 && s.usagePerHour > 0 },
+            { kind: 'producer', label: 'In', value: s.productionPerHour, flowing: s.productionPerHour > 0 },
+          ] as const
+        ).map((row) => (
+          <div
+            key={row.kind}
+            className={`flow__row flow__row--${row.kind}`}
+            tabIndex={0}
+            onMouseEnter={() => setHovered(row.kind)}
+            onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(row.kind)}
+            onBlur={() => setHovered(null)}
+          >
+            <span className="flow__label">{row.label}</span>
+            <span className="flow__track">
+              <span
+                className={`flow__fill flow__fill--${row.kind === 'consumer' ? 'out' : 'in'}${row.flowing ? ' is-flowing' : ''}`}
+                style={{ width: `${(row.value / flowScale) * 100}%`, ...motion }}
+              />
+            </span>
+            <span className="flow__value">{fmt(row.value)}/h</span>
+          </div>
+        ))}
+        {hovered && <RatioBreakdown kind={hovered} flows={flows} total={hovered === 'consumer' ? s.usagePerHour : s.productionPerHour} />}
       </div>
 
       <div className="gauge__footer">

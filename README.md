@@ -57,8 +57,8 @@ appears and the run restarts with the next seed.
   early on depletion, critical condition or death, so nothing happens off-screen.
 - **Resources:** one gauge per resource: a stock bar (fill vs empty) with a live red
   draining or green filling edge whose stripe speed follows the net rate, a ghost chunk
-  after sudden drops, an OUT/IN per-hour flow meter (hover for the usage and production
-  breakdown), net rate, and "Empty in…" / "Full in…". GEN ON/OFF in the top bar switches
+  after sudden drops, an OUT/IN per-hour flow meter (hover OUT or IN for a macOS-storage-style
+  ratio of its sources), net rate, and "Empty in…" / "Full in…". GEN ON/OFF in the top bar switches
   on test generators. All rates are per hour.
 - **Crew slot:** name, role, location, a procedural face with 5 expressions, vitals with an
   ECG trace and 24h trends, a speaking waveform with the latest line, and an unread

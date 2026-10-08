@@ -374,12 +374,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  cursor: help;
-}
-
-.flow:focus-visible {
-  outline: 1px solid var(--ga-color-negative);
-  outline-offset: 2px;
 }
 
 .flow__row {
@@ -436,12 +430,27 @@ button {
   text-align: right;
 }
 
-.flow:hover .flow__label {
+.flow__row {
+  cursor: help;
+}
+
+.flow__row--consumer:hover .flow__label,
+.flow__row--consumer:focus-visible .flow__label {
   color: var(--ga-color-negative);
 }
 
-/* Usage + production breakdown, floating just below the flow meter. */
-.usage-tooltip {
+.flow__row--producer:hover .flow__label,
+.flow__row--producer:focus-visible .flow__label {
+  color: var(--ga-green);
+}
+
+.flow__row:focus-visible {
+  outline: 1px solid var(--ga-green-dim);
+  outline-offset: 1px;
+}
+
+/* Hover breakdown of OUT or IN, macOS-storage style: ratio bar + legend. */
+.ratio-tooltip {
   position: absolute;
   left: 0;
   right: 0;
@@ -449,58 +458,67 @@ button {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   padding: var(--ga-space-2) var(--ga-space-3);
   background: #000;
-  border: 1px solid var(--ga-green);
+  border: 1px solid var(--ga-color-negative);
   box-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
   font-size: var(--ga-font-size-s);
   pointer-events: none;
 }
 
-.usage-tooltip__title {
+.ratio-tooltip--producer {
+  border-color: var(--ga-green);
+}
+
+.ratio-tooltip__title {
+  display: flex;
+  justify-content: space-between;
   letter-spacing: 0.18em;
   color: var(--ga-color-negative);
 }
 
-.usage-tooltip__row {
+.ratio-tooltip--producer .ratio-tooltip__title {
+  color: var(--ga-green);
+}
+
+.ratio-bar {
+  display: flex;
+  height: 12px;
+  gap: 1px;
+  border: 1px solid var(--ga-green-dim);
+  overflow: hidden;
+}
+
+.ratio-bar__segment {
+  height: 100%;
+}
+
+.ratio-legend {
   display: flex;
   align-items: center;
   gap: var(--ga-space-2);
 }
 
-.usage-tooltip__label {
-  width: 130px;
+.ratio-legend__swatch {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
 }
 
-.usage-tooltip__track {
+.ratio-legend__label {
   flex: 1;
-  height: 6px;
-  border: 1px solid var(--ga-green-dim);
-  overflow: hidden;
 }
 
-.usage-tooltip__fill {
-  display: block;
-  height: 100%;
-  background: var(--ga-color-negative);
+.ratio-legend__value {
+  width: 64px;
+  text-align: right;
 }
 
-.usage-tooltip__value {
-  margin-left: auto;
-}
-
-.usage-tooltip__title--producer {
-  color: var(--ga-green);
-}
-
-.usage-tooltip__fill--producer {
-  background: var(--ga-green);
-}
-
-.usage-tooltip__divider {
-  border-top: 1px dashed var(--ga-green-dim);
-  margin: 2px 0;
+.ratio-legend__share {
+  width: 36px;
+  text-align: right;
+  color: var(--ga-color-text-dim);
 }
 
 /* ---------- Crew ---------- */
