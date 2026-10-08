@@ -193,6 +193,7 @@ function BudgetGauge({
   return (
     <div
       className={`gauge gauge--${level}${dimmed ? ' is-dimmed' : ''}`}
+      style={{ '--res-color': meta.color } as React.CSSProperties}
       tabIndex={0}
       onMouseEnter={open}
       onMouseLeave={close}
@@ -200,7 +201,7 @@ function BudgetGauge({
       onBlur={close}
     >
       <div className="gauge__header">
-        <span className="gauge__title" style={{ color: meta.color }}>
+        <span className="gauge__title">
           <span className="gauge__code">{meta.code}</span> {meta.label}
         </span>
         <span className="gauge__value">

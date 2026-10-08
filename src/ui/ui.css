@@ -251,13 +251,18 @@ button {
 
 .gauge__title {
   letter-spacing: 0.08em;
-  text-shadow: 0 0 6px currentColor;
 }
 
 .gauge__code {
   padding: 0 4px;
   border: 1px solid currentColor;
   font-size: var(--ga-font-size-s);
+}
+
+.gauge__title,
+.gauge__value {
+  color: var(--res-color);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--res-color) 45%, transparent);
 }
 
 .gauge__value {
@@ -285,7 +290,8 @@ button {
 .runway {
   width: 42px;
   padding: 0 4px;
-  border: 1px solid var(--ga-green-dim);
+  color: var(--res-color);
+  border: 1px solid var(--res-color);
   text-align: center;
   font-size: var(--ga-font-size-s);
   line-height: 14px;
@@ -330,7 +336,7 @@ button {
   position: relative;
   height: 14px;
   overflow: hidden;
-  border: 1px solid var(--ga-green-dim);
+  border: 1px solid var(--res-color);
   background: #000;
 }
 
