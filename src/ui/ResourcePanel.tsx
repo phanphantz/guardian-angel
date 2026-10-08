@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore, type ResourceSummary } from '../core/resources'
 import { computeFlows } from '../core/sim'
-import { formatHours, formatHoursLong } from '../core/time'
+import { formatHours, formatHoursLong, type Speed } from '../core/time'
 import { SIM_CONFIG, useGameStore, type ResourceTab } from '../state/gameStore'
 
 /** Resource colors are the only non-terminal hues in the HUD besides alerts. */
@@ -105,14 +105,13 @@ function urgency(stock: number, hoursLeft: number): Urgency {
 }
 
 const whole = (v: number) => Math.round(v).toLocaleString()
+const tenth = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 function formatNet(perHour: number): string {
   const abs = Math.abs(perHour)
   const text = abs >= 10 ? Math.round(abs).toString() : abs.toFixed(1)
   return `${perHour > 0 ? '+' : perHour < 0 ? '−' : '±'}${text}/h`
 }
-
-const USAGE_COLOR = '#ff3b30'
 
 /** Floating breakdown of per-hour usage by consumer, shown below the bar. */
 function UsageBreakdown({ flows, summary }: { flows: Flow[]; summary: ResourceSummary }) {
@@ -145,7 +144,30 @@ function UsageBreakdown({ flows, summary }: { flows: Flow[]; summary: ResourceSu
   )
 }
 
-/** Budget: stock out of capacity, split into the next hour of usage, the rest, and free space. */
+/**
+ * Lost stock that lingers after a sudden drop (e.g. a time skip), then shrinks away.
+ * Small per-tick drains stay below `threshold` and never leave a ghost.
+ */
+function useGhost(stock: number, threshold: number): number {
+  const [ghost, setGhost] = useState(stock)
+  useEffect(() => {
+    const id = setTimeout(() => setGhost(stock), ghost - stock > threshold ? 700 : 0)
+    return () => clearTimeout(id)
+  }, [stock, ghost, threshold])
+  return Math.max(0, ghost - stock) > threshold ? ghost - stock : 0
+}
+
+/** Drain stripe period in seconds: faster when draining a bigger share of capacity, and at 10×. */
+function drainPeriod(usagePerHour: number, capacity: number, speed: Speed): number {
+  const percentPerHour = (usagePerHour / capacity) * 100
+  const base = Math.min(3, Math.max(0.4, 0.9 / Math.max(percentPerHour, 0.01)))
+  return speed === 'fast' ? Math.max(0.15, base / 3) : base
+}
+
+/**
+ * Budget: a stock bar (fill vs empty) with a live draining edge, plus an OUT/IN flow
+ * meter. Stock and rate are shown separately so neither has to be read off the other.
+ */
 function BudgetGauge({
   id,
   minute,
@@ -161,22 +183,20 @@ function BudgetGauge({
   flows: Flow[]
 }) {
   const meta = RESOURCES[id]
+  const speed = useGameStore((st) => st.speed)
   const s = summarize(id, store, flows)
   const [showUsage, setShowUsage] = useState(false)
-  const usageHover = {
-    onMouseEnter: () => setShowUsage(true),
-    onMouseLeave: () => setShowUsage(false),
-    onFocus: () => setShowUsage(true),
-    onBlur: () => setShowUsage(false),
-  }
+  const ghost = useGhost(store.stock, store.capacity * 0.01)
   const hoursLeft = emptyAt === undefined ? Infinity : (emptyAt - minute) / 60
   const level = urgency(store.stock, hoursLeft)
   const net = s.productionPerHour - s.usagePerHour
-  const segments: Segment[] = [
-    { label: 'Usage/h', value: s.nextHourUsage, color: USAGE_COLOR },
-    { label: 'Free', value: s.free, color: meta.color },
-    { label: 'Empty', value: s.empty, color: 'rgba(255, 255, 255, 0.06)' },
-  ]
+  const pct = (v: number) => `${(v / store.capacity) * 100}%`
+  const draining = store.stock > 0 && s.usagePerHour > s.productionPerHour
+  const flowScale = Math.max(s.usagePerHour, s.productionPerHour, 0.0001)
+  const motion = {
+    animationDuration: `${drainPeriod(s.usagePerHour, store.capacity, speed)}s`,
+    animationPlayState: speed === 'paused' ? 'paused' : 'running',
+  } as const
 
   return (
     <div className={`gauge gauge--${level}`}>
@@ -185,41 +205,40 @@ function BudgetGauge({
           <span className="gauge__code">{meta.code}</span> {meta.label}
         </span>
         <span className="gauge__value">
-          {whole(store.stock)} / {whole(store.capacity)}
+          {tenth(store.stock)} / {whole(store.capacity)}
           <span className="gauge__runway">{level === 'depleted' ? 'Depleted' : formatHours(hoursLeft)}</span>
         </span>
       </div>
-      <div className="gauge__bar">
-        {segments.map((seg) =>
-          seg.value > 0 ? (
-            <div
-              key={seg.label}
-              className={`gauge__segment${seg.label === 'Usage/h' ? ' gauge__segment--use' : ''}`}
-              title={seg.label === 'Usage/h' ? undefined : `${seg.label}: ${whole(seg.value)}`}
-              style={{ width: `${(seg.value / store.capacity) * 100}%`, background: seg.color }}
-              {...(seg.label === 'Usage/h' ? usageHover : {})}
-            />
-          ) : null,
-        )}
+
+      <div className={`stock-bar${ghost > 0 ? ' is-dropping' : ''}`} role="meter" aria-valuemin={0} aria-valuemax={store.capacity} aria-valuenow={store.stock} aria-label={`${meta.label} stock`}>
+        <div className="stock-bar__fill" style={{ width: pct(store.stock), background: meta.color }} />
+        <div className="stock-bar__ghost" style={{ left: pct(store.stock), width: pct(ghost) }} />
+        {draining && <div className="stock-bar__drain" style={{ left: pct(store.stock), ...motion }} />}
       </div>
-      <div className="gauge__legend gauge__legend--single">
-        {segments.map((seg, i) => (
-          <span
-            key={seg.label}
-            className={`legend-item legend-item--col-${['start', 'center', 'end'][i]}${seg.label === 'Usage/h' ? ' legend-item--hoverable' : ''}`}
-            {...(seg.label === 'Usage/h' ? { ...usageHover, tabIndex: 0 } : {})}
-          >
-            <span className="swatch" style={{ background: seg.color }} />
-            {seg.label} <span className="legend-item__value">{whole(seg.value)}</span>
+
+      <div className="flow" onMouseEnter={() => setShowUsage(true)} onMouseLeave={() => setShowUsage(false)} onFocus={() => setShowUsage(true)} onBlur={() => setShowUsage(false)} tabIndex={0}>
+        <div className="flow__row">
+          <span className="flow__label">Out</span>
+          <span className="flow__track">
+            <span className={`flow__fill flow__fill--out${draining ? ' is-flowing' : ''}`} style={{ width: `${(s.usagePerHour / flowScale) * 100}%`, ...motion }} />
           </span>
-        ))}
+          <span className="flow__value">{fmt(s.usagePerHour)}/h</span>
+        </div>
+        <div className="flow__row">
+          <span className="flow__label">In</span>
+          <span className="flow__track">
+            <span className="flow__fill flow__fill--in" style={{ width: `${(s.productionPerHour / flowScale) * 100}%` }} />
+          </span>
+          <span className="flow__value">{fmt(s.productionPerHour)}/h</span>
+        </div>
+        {showUsage && <UsageBreakdown flows={flows} summary={s} />}
       </div>
-      {showUsage && <UsageBreakdown flows={flows} summary={s} />}
+
       <div className="gauge__footer">
         {level === 'depleted' && net < 0 ? (
           <span className="negative">Unmet {formatNet(-net).slice(1)}</span>
         ) : (
-          <span className={net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}>{formatNet(net)}</span>
+          <span className={net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}>{formatNet(net)} net</span>
         )}
         <span className="gauge__eta">
           {level === 'depleted' ? 'Out of stock' : emptyAt !== undefined ? `Empty in ${formatHoursLong(hoursLeft)}` : 'Lasts 7+ days'}

@@ -293,37 +293,11 @@ button {
   transition: width 0.4s;
 }
 
-.gauge__segment--use {
-  min-width: 3px;
-  cursor: help;
-}
-
 .gauge__legend {
   display: flex;
   flex-wrap: wrap;
   gap: 4px var(--ga-space-3);
   font-size: var(--ga-font-size-s);
-}
-
-/* Budget legend: usage / free / empty spread evenly across the gauge width. */
-.gauge__legend--single {
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-/* Three equal columns so labels line up across every gauge regardless of number width. */
-.legend-item--col-start,
-.legend-item--col-center,
-.legend-item--col-end {
-  flex: 1;
-}
-
-.legend-item--col-center {
-  justify-content: center;
-}
-
-.legend-item--col-end {
-  justify-content: flex-end;
 }
 
 .legend-item {
@@ -338,16 +312,6 @@ button {
 
 .legend-item--end {
   margin-left: auto;
-}
-
-.legend-item--hoverable {
-  cursor: help;
-}
-
-.legend-item--hoverable:hover,
-.legend-item--hoverable:focus-visible {
-  outline: 1px solid var(--ga-color-negative);
-  outline-offset: 2px;
 }
 
 .gauge__runway {
@@ -385,7 +349,6 @@ button {
   color: var(--ga-color-negative);
 }
 
-.gauge--critical .gauge__segment--use,
 .gauge--critical .gauge__runway {
   animation: blink 1s steps(2, jump-none) infinite;
 }
@@ -411,12 +374,133 @@ button {
   border-color: var(--ga-color-negative);
 }
 
-/* Usage breakdown, floating just below the bar. */
+/* Stock bar: fill vs empty, with a live draining edge and a ghost of recent losses. */
+.stock-bar {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid var(--ga-green-dim);
+  background: #000;
+}
+
+.stock-bar__fill,
+.stock-bar__ghost,
+.stock-bar__drain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.stock-bar__fill {
+  left: 0;
+  transition: width 1s linear;
+}
+
+.stock-bar__ghost {
+  background: repeating-linear-gradient(135deg, rgba(255, 59, 48, 0.85) 0 2px, rgba(255, 59, 48, 0.45) 2px 4px);
+  transition: width 0.6s ease-in;
+}
+
+/* Red stripes eating into the fill's edge; speed follows the drain rate. */
+.stock-bar__drain {
+  width: 18px;
+  margin-left: -18px;
+  transition: left 1s linear;
+  background: repeating-linear-gradient(90deg, var(--ga-color-negative) 0 3px, transparent 3px 6px);
+  background-size: 6px 100%;
+  animation-name: drain-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0.9;
+}
+
+/* A sudden drop snaps the fill and shows the ghost at full size at once;
+   the ghost only animates when it shrinks away (after is-dropping clears). */
+.stock-bar.is-dropping .stock-bar__fill,
+.stock-bar.is-dropping .stock-bar__ghost,
+.stock-bar.is-dropping .stock-bar__drain {
+  transition: none;
+}
+
+@keyframes drain-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -6px 0;
+  }
+}
+
+/* OUT (usage) vs IN (production) per hour. Hover for the usage breakdown. */
+.flow {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: help;
+}
+
+.flow:focus-visible {
+  outline: 1px solid var(--ga-color-negative);
+  outline-offset: 2px;
+}
+
+.flow__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ga-space-2);
+  font-size: var(--ga-font-size-s);
+}
+
+.flow__label {
+  width: 28px;
+  color: var(--ga-color-text-dim);
+}
+
+.flow__track {
+  flex: 1;
+  height: 6px;
+  border: 1px solid var(--ga-green-dim);
+  overflow: hidden;
+}
+
+.flow__fill {
+  display: block;
+  height: 100%;
+  transition: width 0.4s;
+}
+
+.flow__fill--out {
+  background: var(--ga-color-negative);
+}
+
+.flow__fill--out.is-flowing {
+  background: repeating-linear-gradient(90deg, var(--ga-color-negative) 0 4px, rgba(255, 59, 48, 0.55) 4px 8px);
+  background-size: 8px 100%;
+  animation-name: drain-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.flow__fill--in {
+  background: var(--ga-green);
+}
+
+.flow__value {
+  width: 64px;
+  text-align: right;
+}
+
+.flow:hover .flow__label {
+  color: var(--ga-color-negative);
+}
+
+/* Usage breakdown, floating just below the flow meter. */
 .usage-tooltip {
   position: absolute;
   left: 0;
   right: 0;
-  top: 40px;
+  top: calc(100% + 4px);
   z-index: 10;
   display: flex;
   flex-direction: column;
