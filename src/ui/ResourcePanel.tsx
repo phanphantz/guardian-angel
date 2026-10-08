@@ -158,8 +158,8 @@ function BudgetGauge({
   const level = urgency(store.stock, hoursLeft)
   const net = s.productionPerHour - s.usagePerHour
   const segments: Segment[] = [
-    { label: 'Usage/h', value: s.nextHourUsage, color: meta.color },
-    { label: 'Free', value: s.free, color: `${meta.color}66` },
+    { label: 'Usage/h', value: s.nextHourUsage, color: '#ff5c5c' },
+    { label: 'Free', value: s.free, color: meta.color },
     { label: 'Empty', value: s.empty, color: 'rgba(255, 255, 255, 0.06)' },
   ]
 
