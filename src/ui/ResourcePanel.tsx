@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore } from '../core/resources'
 import { computeFlows } from '../core/sim'
-import { formatHoursLong, type Speed } from '../core/time'
+import { formatHours, type Speed } from '../core/time'
 import { SIM_CONFIG, useGameStore } from '../state/gameStore'
 
 /** Resource colors are the only non-terminal hues in the HUD besides alerts. */
@@ -58,13 +58,13 @@ const RATIO_COLORS: Record<Flow['kind'], string[]> = {
 }
 
 /**
- * Hover breakdown of OUT and IN together, macOS-storage style. Both ratio bars share the
+ * Hover breakdown of IN and OUT together, macOS-storage style. Both ratio bars share the
  * flow meter's scale (the larger of the two rates), so their lengths compare directly.
  */
 function FlowBreakdown({ flows, scale }: { flows: Flow[]; scale: number }) {
   return (
     <div className="ratio-tooltip" role="tooltip">
-      {(['consumer', 'producer'] as const).map((kind) => {
+      {(['producer', 'consumer'] as const).map((kind) => {
         const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
         const total = items.reduce((sum, f) => sum + f.perHour, 0)
         const colors = RATIO_COLORS[kind]
@@ -115,29 +115,14 @@ function drainPeriod(usagePerHour: number, capacity: number, speed: Speed): numb
   return speed === 'fast' ? Math.max(0.15, base / 3) : base
 }
 
-/** Only says something when the stock is moving: "Empty in…" while draining, "Full in…" on surplus. */
-function Eta({
-  level,
-  draining,
-  filling,
-  hoursLeft,
-  hoursToFull,
-  atCapacity,
-}: {
-  level: Urgency
-  draining: boolean
-  filling: boolean
-  hoursLeft: number
-  hoursToFull: number
-  atCapacity: boolean
-}) {
-  if (level === 'depleted') return <span className="gauge__eta negative">Depleted</span>
-  if (draining) {
-    return <span className="gauge__eta">Empty in {Number.isFinite(hoursLeft) ? formatHoursLong(hoursLeft) : '7+ days'}</span>
-  }
-  if (filling) return <span className="gauge__eta gauge__eta--fill">Full in {formatHoursLong(hoursToFull)}</span>
-  if (atCapacity) return <span className="gauge__eta gauge__eta--fill">Full</span>
-  return null
+/** Time left while depleting, ∞ on surplus or balance, 0H when out. */
+function Runway({ level, draining, hoursLeft }: { level: Urgency; draining: boolean; hoursLeft: number }) {
+  const text = level === 'depleted' ? '0h' : draining && Number.isFinite(hoursLeft) ? formatHours(hoursLeft) : draining ? '7d+' : '∞'
+  return (
+    <span className="runway" title={draining ? 'Time until empty' : 'Not depleting'}>
+      {text}
+    </span>
+  )
 }
 
 /**
@@ -186,11 +171,14 @@ function BudgetGauge({
         </span>
       </div>
 
+      <div className="stock-row">
       <div className={`stock-bar${ghost > 0 ? ' is-dropping' : ''}`} role="meter" aria-valuemin={0} aria-valuemax={store.capacity} aria-valuenow={store.stock} aria-label={`${meta.label} stock`}>
         <div className="stock-bar__fill" style={{ width: pct(store.stock), background: meta.color }} />
         <div className="stock-bar__ghost" style={{ left: pct(store.stock), width: pct(ghost) }} />
         {draining && <div className="stock-bar__drain" style={{ left: pct(store.stock), ...motion }} />}
         {filling && <div className="stock-bar__charge" style={{ left: pct(store.stock), ...motion }} />}
+      </div>
+      <Runway level={level} draining={draining} hoursLeft={hoursLeft} />
       </div>
 
       <div
@@ -204,8 +192,8 @@ function BudgetGauge({
         <div className="flow__bars">
           {(
             [
-              { kind: 'consumer', label: 'Out', value: s.usagePerHour, flowing: store.stock > 0 && s.usagePerHour > 0 },
               { kind: 'producer', label: 'In', value: s.productionPerHour, flowing: s.productionPerHour > 0 },
+              { kind: 'consumer', label: 'Out', value: s.usagePerHour, flowing: store.stock > 0 && s.usagePerHour > 0 },
             ] as const
           ).map((row) => (
             <div key={row.kind} className="flow__row">
@@ -228,9 +216,6 @@ function BudgetGauge({
         {showFlows && <FlowBreakdown flows={flows} scale={flowScale} />}
       </div>
 
-      <div className="gauge__footer">
-        <Eta level={level} draining={draining} filling={filling} hoursLeft={hoursLeft} hoursToFull={(store.capacity - store.stock) / net} atCapacity={store.stock >= store.capacity && net > 0} />
-      </div>
     </div>
   )
 }

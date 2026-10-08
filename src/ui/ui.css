@@ -248,29 +248,43 @@ button {
   align-items: baseline;
 }
 
-.gauge__footer {
+/* Runway badge after the stock bar. Urgency: < 24h amber, < 6h red + blink, depleted red. */
+.stock-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: var(--ga-space-2);
+}
+
+.stock-row .stock-bar {
+  flex: 1;
+}
+
+.runway {
+  width: 48px;
+  padding: 0 4px;
+  border: 1px solid var(--ga-green-dim);
+  text-align: center;
   font-size: var(--ga-font-size-s);
+  line-height: 14px;
 }
 
-.gauge__eta {
-  color: var(--ga-color-text-dim);
-}
-
-/* Urgency (draining only): < 24h amber, < 6h red + blink, depleted dim. */
-.gauge__eta--fill {
-  color: var(--ga-green);
-}
-
-.gauge--warning .gauge__eta {
+.gauge--warning .runway {
   color: var(--ga-color-warning);
+  border-color: var(--ga-color-warning);
   text-shadow: 0 0 6px rgba(255, 176, 0, 0.5);
 }
 
-.gauge--critical .gauge__eta {
-  color: var(--ga-color-negative);
+.gauge--critical .runway {
+  background: var(--ga-color-negative);
+  border-color: var(--ga-color-negative);
+  color: #000;
+  text-shadow: none;
   animation: blink 1s steps(2, jump-none) infinite;
+}
+
+.gauge--depleted .runway {
+  color: var(--ga-color-negative);
+  border-color: var(--ga-color-negative);
 }
 
 @keyframes blink {
@@ -475,7 +489,7 @@ button {
   gap: 5px;
 }
 
-.ratio-section--producer {
+.ratio-section--consumer {
   padding-top: 6px;
   border-top: 1px dashed var(--ga-green-dim);
 }
