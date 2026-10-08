@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { SKIPS, formatClock, type Speed } from '../core/time'
 import { useGameStore } from '../state/gameStore'
+import { PlansPanel } from './Requests'
 
 const SPEEDS: { id: Speed; label: string; title: string }[] = [
   { id: 'paused', label: 'Hold', title: 'Pause' },
@@ -14,8 +15,6 @@ export function TimeBar() {
   const speed = useGameStore((s) => s.speed)
   const setSpeed = useGameStore((s) => s.setSpeed)
   const skip = useGameStore((s) => s.skip)
-  const generatorsOn = useGameStore((s) => s.generatorsOn)
-  const toggleGenerators = useGameStore((s) => s.toggleGenerators)
 
   return (
     <header className="topbar">
@@ -34,17 +33,7 @@ export function TimeBar() {
           </button>
         ))}
       </div>
-      <div className="segmented" role="group" aria-label="Generators">
-        <button
-          className={generatorsOn ? 'is-active' : ''}
-          aria-pressed={generatorsOn}
-          title="Switch every resource generator on or off (prototype test control)"
-          disabled={over}
-          onClick={toggleGenerators}
-        >
-          Gen {generatorsOn ? 'On' : 'Off'}
-        </button>
-      </div>
+      <PlansPanel />
     </header>
   )
 }

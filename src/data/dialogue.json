@@ -7,45 +7,135 @@
   },
   "lines": {
     "idle": {
-      "default": ["Quiet shift. Too quiet.", "Anyone else hear that hum?", "Running diagnostics again.", "Coffee's terrible, as usual."],
-      "Commander": ["Keep to the schedule, people.", "Status reports by end of shift."],
-      "Pilot": ["Miss having a window seat.", "Orbit's stable. Nothing to fly."],
-      "Botanist": ["The seedlings would like more light.", "Talking to the plants again. They listen."]
+      "default": [
+        "Quiet shift. Too quiet.",
+        "Anyone else hear that hum?",
+        "Running diagnostics again.",
+        "Coffee's terrible, as usual."
+      ],
+      "Commander": [
+        "Keep to the schedule, people.",
+        "Status reports by end of shift."
+      ],
+      "Pilot": [
+        "Miss having a window seat.",
+        "Orbit's stable. Nothing to fly."
+      ],
+      "Botanist": [
+        "The seedlings would like more light.",
+        "Talking to the plants again. They listen."
+      ]
     },
     "resourceLow": {
-      "default": ["{resource} reserves are getting low.", "We're running short on {resource}."],
-      "Engineer": ["{resource} is under twelve hours at this rate.", "I'm watching {resource} drop. Not good."],
-      "Medic": ["We need to ration {resource}. Now."],
-      "Botanist": ["{resource} won't last the day."]
+      "default": [
+        "{resource} reserves are getting low.",
+        "We're running short on {resource}."
+      ],
+      "Engineer": [
+        "{resource} is under twelve hours at this rate.",
+        "I'm watching {resource} drop. Not good."
+      ],
+      "Medic": [
+        "We need to ration {resource}. Now."
+      ],
+      "Botanist": [
+        "{resource} won't last the day."
+      ]
     },
     "resourceOut": {
-      "default": ["We're out of {resource}.", "{resource} is gone. Completely."],
-      "Engineer": ["{resource} depleted. Systems are going to suffer.", "That's the last of the {resource}."],
-      "Medic": ["No more {resource}. Everyone conserve your strength."]
+      "default": [
+        "We're out of {resource}.",
+        "{resource} is gone. Completely."
+      ],
+      "Engineer": [
+        "{resource} depleted. Systems are going to suffer.",
+        "That's the last of the {resource}."
+      ],
+      "Medic": [
+        "No more {resource}. Everyone conserve your strength."
+      ]
     },
     "materialsOut": {
-      "default": ["No spare parts left. Life support is running rough."],
-      "Engineer": ["Out of materials. Life support efficiency just halved."]
+      "default": [
+        "No spare parts left. Life support is running rough."
+      ],
+      "Engineer": [
+        "Out of materials. Life support efficiency just halved."
+      ]
     },
     "cold": {
-      "default": ["It's getting so cold...", "I can't feel my fingers.", "Can we turn the heat up? Anyone?"]
+      "default": [
+        "It's getting so cold...",
+        "I can't feel my fingers.",
+        "Can we turn the heat up? Anyone?"
+      ]
     },
     "breathless": {
-      "default": ["Hard to... breathe.", "Air feels thin.", "Headache. Everything's spinning."]
+      "default": [
+        "Hard to... breathe.",
+        "Air feels thin.",
+        "Headache. Everything's spinning."
+      ]
     },
     "thirsty": {
-      "default": ["My mouth is so dry.", "I'd trade anything for a glass of water."]
+      "default": [
+        "My mouth is so dry.",
+        "I'd trade anything for a glass of water."
+      ]
     },
     "hungry": {
-      "default": ["Stomach's been growling for hours.", "When did we last eat?"]
+      "default": [
+        "Stomach's been growling for hours.",
+        "When did we last eat?"
+      ]
     },
     "fading": {
-      "default": ["I need to... lie down.", "Tell them... I tried.", "So tired..."]
+      "default": [
+        "I need to... lie down.",
+        "Tell them... I tried.",
+        "So tired..."
+      ]
     },
     "crewDied": {
-      "default": ["We lost {name}...", "{name}? {name}! No...", "{name} is gone."],
-      "Medic": ["{name} has no pulse. I'm sorry.", "I couldn't save {name}."],
-      "Commander": ["{name} is gone. Stay with me, everyone."]
+      "default": [
+        "We lost {name}...",
+        "{name}? {name}! No...",
+        "{name} is gone."
+      ],
+      "Medic": [
+        "{name} has no pulse. I'm sorry.",
+        "I couldn't save {name}."
+      ],
+      "Commander": [
+        "{name} is gone. Stay with me, everyone."
+      ]
+    },
+    "requestApproved": {
+      "default": [
+        "On it.",
+        "Thank you, Commander.",
+        "Starting now."
+      ],
+      "Engineer": [
+        "Spinning it up.",
+        "Good call. Bringing it online."
+      ],
+      "Botanist": [
+        "The plants thank you."
+      ]
+    },
+    "requestDeclined": {
+      "default": [
+        "Understood.",
+        "...Your call, Commander.",
+        "We'll manage. Somehow."
+      ]
+    },
+    "requestExpired": {
+      "default": [
+        "No answer. Guess that's a no.",
+        "I'll take the silence as a no."
+      ]
     }
   }
 }

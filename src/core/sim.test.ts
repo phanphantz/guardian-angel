@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import crew from '../data/crew.json'
 import dialogue from '../data/dialogue.json'
+import requests from '../data/requests.json'
 import scenario from '../data/scenario.json'
-import { advance, computeFlows, createSim, forecastDepletion, setFlowsEnabled, type SimConfig, type SimEvent } from './sim'
+import { advance, approveRequest, computeFlows, createSim, declineRequest, disposePlan, forecastDepletion, togglePlanPaused, type SimConfig, type SimEvent, type SimState } from './sim'
 import { summarize } from './resources'
 
-const config = { scenario, crew, dialogue } as unknown as SimConfig
+const config = { scenario, crew, dialogue, requests } as unknown as SimConfig
 
 function runToEnd(seed: number) {
   const result = advance(createSim(config, seed), config, 10 * 1440)
@@ -44,7 +45,7 @@ describe('advance', () => {
   it('stops a skip at the first important event', () => {
     const sim = createSim(config, 1)
     const { state, stoppedBy } = advance(sim, config, 3 * 1440, true)
-    expect(stoppedBy).toMatchObject({ type: 'depleted', resource: 'materials' })
+    expect(stoppedBy).toMatchObject({ type: 'request' })
     expect(state.minute).toBe(stoppedBy!.minute)
   })
 
@@ -89,18 +90,88 @@ describe('forecastDepletion', () => {
   })
 })
 
-describe('generators', () => {
-  it('start switched off and can be toggled', () => {
-    const sim = createSim(config, 1)
-    expect(computeFlows(sim, config).filter((f) => f.kind === 'producer')).toHaveLength(0)
+/** Advance until the first pending request from `defId` appears. */
+function untilRequest(sim: SimState, defId: string): SimState {
+  for (let i = 0; i < 3 * 1440; i++) {
+    if (sim.requests.some((r) => r.defId === defId && r.status === 'pending')) return sim
+    sim = advance(sim, config, 1).state
+  }
+  throw new Error(`no ${defId} request`)
+}
 
-    const ids = config.scenario.producers.map((p) => p.id)
-    const on = setFlowsEnabled(sim, ids, true)
-    const producers = computeFlows(on, config).filter((f) => f.kind === 'producer')
-    expect(producers.map((p) => p.resource).sort()).toEqual(['energy', 'food', 'materials', 'water'])
+const pending = (sim: SimState, defId: string) => sim.requests.find((r) => r.defId === defId && r.status === 'pending')!
 
-    const later = advance(on, config, 60).state
-    expect(later.resources.energy.stock).toBeGreaterThan(on.resources.energy.stock)
-    expect(computeFlows(setFlowsEnabled(on, ids, false), config).filter((f) => f.kind === 'producer')).toHaveLength(0)
+describe('requests and plans', () => {
+  it('every plan has a single output; its other items are costs', () => {
+    for (const def of config.requests) {
+      expect(def.plan.items.filter((i) => i.perHour > 0), def.id).toHaveLength(1)
+    }
+  })
+
+  it('the engineer asks to restart the fusion generator at hour 3', () => {
+    const sim = untilRequest(createSim(config, 1), 'fusion')
+    expect((sim.minute - sim.startMinute) / 60).toBe(3)
+    expect(sim.crew.find((c) => c.id === pending(sim, 'fusion').crewId)?.role).toBe('Engineer')
+  })
+
+  it('approving pays one-time costs and adds the plan to the flows', () => {
+    const sim = untilRequest(createSim(config, 1), 'fusion')
+    const result = approveRequest(sim, config, pending(sim, 'fusion').id)
+    if (!result.ok) throw new Error(result.reason)
+    expect(result.state.resources.materials.stock).toBeCloseTo(sim.resources.materials.stock - 15)
+    expect(result.state.plans).toHaveLength(1)
+    const planFlows = computeFlows(result.state, config).filter((f) => f.id.startsWith('plan:'))
+    expect(planFlows.map((f) => [f.resource, f.kind, f.perHour])).toEqual([
+      ['energy', 'producer', 30],
+      ['materials', 'consumer', 1.5],
+    ])
+    // Fusion out-produces usage, so energy rises instead of draining.
+    const later = advance(result.state, config, 60).state
+    expect(later.resources.energy.stock).toBeGreaterThan(result.state.resources.energy.stock)
+  })
+
+  it('paused plans stop contributing; disposed plans are gone', () => {
+    const sim = untilRequest(createSim(config, 1), 'fusion')
+    const approved = approveRequest(sim, config, pending(sim, 'fusion').id)
+    if (!approved.ok) throw new Error(approved.reason)
+    const planId = approved.state.plans[0].id
+    const paused = togglePlanPaused(approved.state, planId)
+    if (!paused.ok) throw new Error(paused.reason)
+    expect(computeFlows(paused.state, config).some((f) => f.id.startsWith('plan:'))).toBe(false)
+    const disposed = disposePlan(paused.state, planId)
+    if (!disposed.ok) throw new Error(disposed.reason)
+    expect(disposed.state.plans).toHaveLength(0)
+  })
+
+  it('declined requests come back after their cooldown; ignored ones expire', () => {
+    let sim = untilRequest(createSim(config, 1), 'fusion')
+    const declined = declineRequest(sim, config, pending(sim, 'fusion').id)
+    if (!declined.ok) throw new Error(declined.reason)
+    sim = untilRequest(declined.state, 'fusion')
+    expect(sim.minute - declined.state.minute).toBe(8 * 60)
+
+    const { events } = advance(sim, config, 6 * 60)
+    expect(events.some((e) => e.type === 'requestExpired')).toBe(true)
+  })
+
+  it('timed plans end on their own', () => {
+    const sim = untilRequest(createSim(config, 1), 'hydroponics')
+    const approved = approveRequest(sim, config, pending(sim, 'hydroponics').id)
+    if (!approved.ok) throw new Error(approved.reason)
+    const { events, state } = advance(approved.state, config, 6 * 60)
+    expect(events.some((e) => e.type === 'planEnded')).toBe(true)
+    expect(state.plans.some((p) => p.defId === 'hydroponics')).toBe(false)
+  })
+
+  it('approving every request keeps the crew alive much longer', () => {
+    let sim = createSim(config, 1)
+    for (let hour = 0; hour < 10 * 24 && !sim.over; hour++) {
+      for (const r of sim.requests.filter((r) => r.status === 'pending')) {
+        const result = approveRequest(sim, config, r.id)
+        if (result.ok) sim = result.state
+      }
+      sim = advance(sim, config, 60).state
+    }
+    expect(sim.crew.filter((c) => c.alive).length).toBeGreaterThan(0)
   })
 })

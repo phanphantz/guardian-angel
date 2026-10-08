@@ -23,8 +23,6 @@ export interface FlowDef {
   scale: FlowScale
   /** Rate is multiplied by `degradedMultiplier` while this resource is empty. */
   degradedWithout?: ResourceId
-  /** Starts switched off when false. Defaults to on. */
-  enabled?: boolean
 }
 
 /** A producer or consumer with its current per-hour rate resolved. */

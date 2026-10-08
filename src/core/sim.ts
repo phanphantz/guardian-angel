@@ -5,6 +5,7 @@
  * state can be cloned, saved, or ported to C# unchanged.
  */
 import { RESOURCE_IDS, applyFlows, summarize, type Flow, type FlowDef, type ResourceId, type Resources } from './resources'
+import { planFlows, unaffordable, type PlanState, type RequestDef, type RequestState } from './requests'
 import { rngNext } from './rng'
 import { bloodOxygen, expression, vitals, type Cabin, type Condition, type Vitals } from './vitals'
 
@@ -66,6 +67,7 @@ export interface SimConfig {
   scenario: ScenarioConfig
   crew: CrewDef[]
   dialogue: DialogueConfig
+  requests: RequestDef[]
 }
 
 // ---------- State ----------
@@ -96,8 +98,11 @@ export interface SimState {
   crew: CrewState[]
   /** One-shot triggers that already fired, e.g. "cold:mira". */
   fired: Record<string, true>
-  /** Producers / consumers currently switched off, by flow id. */
-  disabledFlows: Record<string, true>
+  requests: RequestState[]
+  plans: PlanState[]
+  /** Minute each request def was last resolved (declined, expired, plan ended / disposed). */
+  requestCooldowns: Record<string, number>
+  nextId: number
   nextIdleMinute: number
   over: boolean
 }
@@ -108,6 +113,9 @@ export type SimEvent =
   | { type: 'critical'; minute: number; crewId: string }
   | { type: 'death'; minute: number; crewId: string }
   | { type: 'gameOver'; minute: number }
+  | { type: 'request'; minute: number; crewId: string; requestId: string }
+  | { type: 'requestExpired'; minute: number; crewId: string; requestId: string }
+  | { type: 'planEnded'; minute: number; planId: string; name: string }
 
 // ---------- Setup ----------
 
@@ -130,9 +138,10 @@ export function createSim(config: SimConfig, seed: number): SimState {
     cabin: { o2: scenario.cabin.o2, co2: scenario.cabin.co2, temp: scenario.cabin.temp },
     crew: [],
     fired: {},
-    disabledFlows: Object.fromEntries(
-      [...scenario.producers, ...scenario.consumers].filter((f) => f.enabled === false).map((f) => [f.id, true as const]),
-    ),
+    requests: [],
+    plans: [],
+    requestCooldowns: {},
+    nextId: 1,
     nextIdleMinute: 0,
     over: false,
   }
@@ -172,19 +181,10 @@ export function computeFlows(state: SimState, config: SimConfig): Flow[] {
     return { id: def.id, label: def.label, resource: def.resource, kind, perHour }
   }
   return [
-    ...scenario.producers.filter((p) => !state.disabledFlows[p.id]).map((p) => resolve(p, 'producer')),
-    ...scenario.consumers.filter((c) => !state.disabledFlows[c.id]).map((c) => resolve(c, 'consumer')),
+    ...scenario.producers.map((p) => resolve(p, 'producer')),
+    ...scenario.consumers.map((c) => resolve(c, 'consumer')),
+    ...planFlows(state.plans),
   ]
-}
-
-/** Switch producers / consumers on or off. Returns a new state. */
-export function setFlowsEnabled(state: SimState, ids: string[], enabled: boolean): SimState {
-  const disabledFlows = { ...state.disabledFlows }
-  for (const id of ids) {
-    if (enabled) delete disabledFlows[id]
-    else disabledFlows[id] = true
-  }
-  return { ...state, disabledFlows }
 }
 
 // ---------- Tick ----------
@@ -201,6 +201,8 @@ export function tick(state: SimState, config: SimConfig): SimEvent[] {
   ) as Record<ResourceId, number>
   const met = applyFlows(state.resources, flows, 1)
   state.minute += 1
+  tickPlans(state, events)
+  tickRequests(state, config, flows, events)
 
   // Resources running low / out.
   for (const id of RESOURCE_IDS) {
@@ -325,6 +327,132 @@ export function forecastDepletion(state: SimState, config: SimConfig, horizonMin
   return forecast
 }
 
+// ---------- Requests & plans ----------
+
+function tickPlans(state: SimState, events: SimEvent[]) {
+  for (const plan of state.plans) {
+    if (!plan.paused && plan.remainingMinutes !== null) plan.remainingMinutes -= 1
+  }
+  for (const plan of state.plans.filter((p) => p.remainingMinutes !== null && p.remainingMinutes <= 0)) {
+    events.push({ type: 'planEnded', minute: state.minute, planId: plan.id, name: plan.name })
+    state.requestCooldowns[plan.defId] = state.minute
+  }
+  state.plans = state.plans.filter((p) => p.remainingMinutes === null || p.remainingMinutes > 0)
+}
+
+function tickRequests(state: SimState, config: SimConfig, flows: Flow[], events: SimEvent[]) {
+  for (const request of state.requests) {
+    if (request.status !== 'pending' || state.minute < request.expiresAt) continue
+    request.status = 'expired'
+    state.requestCooldowns[request.defId] = state.minute
+    events.push({ type: 'requestExpired', minute: state.minute, crewId: request.crewId, requestId: request.id })
+    const sender = state.crew.find((c) => c.id === request.crewId)
+    if (sender?.alive) say(state, config, sender, 'requestExpired', {}, events)
+  }
+
+  for (const def of config.requests) {
+    if (state.requests.some((r) => r.defId === def.id && r.status === 'pending')) continue
+    if (state.plans.some((p) => p.defId === def.id)) continue
+    const last = state.requestCooldowns[def.id]
+    if (last !== undefined && (def.repeatAfterHours === null || state.minute < last + def.repeatAfterHours * 60)) continue
+    if (!triggered(state, def, flows)) continue
+    const sender = state.crew.find((c) => c.alive && c.role === def.from)
+    if (!sender) continue
+
+    const request: RequestState = {
+      id: `r${state.nextId++}`,
+      defId: def.id,
+      crewId: sender.id,
+      createdAt: state.minute,
+      expiresAt: state.minute + def.expiresHours * 60,
+      status: 'pending',
+    }
+    state.requests.push(request)
+    events.push({ type: 'request', minute: state.minute, crewId: sender.id, requestId: request.id })
+    speak(state, sender, def.text, events)
+  }
+}
+
+function triggered(state: SimState, def: RequestDef, flows: Flow[]): boolean {
+  const t = def.trigger
+  if (t.type === 'atHour') {
+    // One-shot until resolved; afterwards the cooldown governs repeats.
+    return state.minute >= state.startMinute + t.hour * 60
+  }
+  return summarize(t.resource, state.resources[t.resource], flows).hoursLeft < t.hours
+}
+
+export type ActionResult = { ok: true; state: SimState; events: SimEvent[] } | { ok: false; reason: string }
+
+function pendingRequest(state: SimState, requestId: string): RequestState | undefined {
+  return state.requests.find((r) => r.id === requestId && r.status === 'pending')
+}
+
+/** Pay one-time items and start the plan (if it has per-hour items). */
+export function approveRequest(state: SimState, config: SimConfig, requestId: string): ActionResult {
+  const original = pendingRequest(state, requestId)
+  const def = original && config.requests.find((d) => d.id === original.defId)
+  if (!original || !def) return { ok: false, reason: 'Request is no longer pending' }
+  const reason = unaffordable(def.plan, state.resources)
+  if (reason) return { ok: false, reason }
+
+  const next = structuredClone(state)
+  const events: SimEvent[] = []
+  const request = pendingRequest(next, requestId)!
+  request.status = 'approved'
+  for (const item of def.plan.oneTime) {
+    const store = next.resources[item.resource]
+    store.stock = Math.min(store.capacity, Math.max(0, store.stock + item.amount))
+  }
+  if (def.plan.items.length) {
+    next.plans.push({
+      id: `p${next.nextId++}`,
+      defId: def.id,
+      name: def.plan.name,
+      crewId: request.crewId,
+      items: def.plan.items.map((i) => ({ ...i })),
+      startedAt: next.minute,
+      remainingMinutes: def.plan.durationHours === null ? null : def.plan.durationHours * 60,
+      paused: false,
+    })
+  } else {
+    next.requestCooldowns[def.id] = next.minute
+  }
+  const sender = next.crew.find((c) => c.id === request.crewId)
+  if (sender?.alive) say(next, config, sender, 'requestApproved', {}, events)
+  return { ok: true, state: next, events }
+}
+
+export function declineRequest(state: SimState, config: SimConfig, requestId: string): ActionResult {
+  if (!pendingRequest(state, requestId)) return { ok: false, reason: 'Request is no longer pending' }
+  const next = structuredClone(state)
+  const events: SimEvent[] = []
+  const request = pendingRequest(next, requestId)!
+  request.status = 'declined'
+  next.requestCooldowns[request.defId] = next.minute
+  const sender = next.crew.find((c) => c.id === request.crewId)
+  if (sender?.alive) say(next, config, sender, 'requestDeclined', {}, events)
+  return { ok: true, state: next, events }
+}
+
+export function togglePlanPaused(state: SimState, planId: string): ActionResult {
+  if (!state.plans.some((p) => p.id === planId)) return { ok: false, reason: 'Plan not found' }
+  const next = structuredClone(state)
+  const plan = next.plans.find((p) => p.id === planId)!
+  plan.paused = !plan.paused
+  return { ok: true, state: next, events: [] }
+}
+
+/** Stop a plan for good. The crew may ask for it again after its cooldown. */
+export function disposePlan(state: SimState, planId: string): ActionResult {
+  const plan = state.plans.find((p) => p.id === planId)
+  if (!plan) return { ok: false, reason: 'Plan not found' }
+  const next = structuredClone(state)
+  next.plans = next.plans.filter((p) => p.id !== planId)
+  next.requestCooldowns[plan.defId] = next.minute
+  return { ok: true, state: next, events: [] }
+}
+
 // ---------- Helpers ----------
 
 const clamp100 = (v: number) => Math.min(100, Math.max(0, v))
@@ -348,14 +476,18 @@ function speakAbout(state: SimState, config: SimConfig, resource: ResourceId, tr
   if (speaker) say(state, config, speaker, trigger, { resource: RESOURCE_NAMES[resource] }, events)
 }
 
+/** Record a verbatim line from a crew member. */
+function speak(state: SimState, member: CrewState, text: string, events: SimEvent[]) {
+  member.messages.push({ minute: state.minute, text })
+  if (member.messages.length > 20) member.messages.shift()
+  events.push({ type: 'say', minute: state.minute, crewId: member.id, text })
+}
+
 function say(state: SimState, config: SimConfig, member: CrewState, trigger: string, vars: Record<string, string>, events: SimEvent[]) {
   const table = config.dialogue.lines[trigger]
   const options = table?.[member.role] ?? table?.default
   if (!options?.length) return
   let text = options[Math.floor(random(state) * options.length)]
   for (const [key, value] of Object.entries(vars)) text = text.replaceAll(`{${key}}`, value)
-  text = text[0].toUpperCase() + text.slice(1)
-  member.messages.push({ minute: state.minute, text })
-  if (member.messages.length > 20) member.messages.shift()
-  events.push({ type: 'say', minute: state.minute, crewId: member.id, text })
+  speak(state, member, text[0].toUpperCase() + text.slice(1), events)
 }

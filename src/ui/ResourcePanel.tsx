@@ -4,14 +4,8 @@ import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore
 import { computeFlows } from '../core/sim'
 import { formatHours, type Speed } from '../core/time'
 import { SIM_CONFIG, useGameStore } from '../state/gameStore'
+import { RESOURCES } from './resourceMeta'
 
-/** Resource colors are the only non-terminal hues in the HUD besides alerts. */
-const RESOURCES: Record<ResourceId, { label: string; code: string; color: string }> = {
-  energy: { label: 'Energy', code: 'PWR', color: '#ffd27f' },
-  water: { label: 'Water', code: 'H₂O', color: '#7fd4ff' },
-  food: { label: 'Food', code: 'NUT', color: '#b6f29a' },
-  materials: { label: 'Materials', code: 'MAT', color: '#d0a77c' },
-}
 
 const fmt = (v: number) => (v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(1))
 

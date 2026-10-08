@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom'
 import type { CrewState, SimState } from '../core/sim'
 import { formatClock } from '../core/time'
 import { expression, vitalStatus, vitals, type VitalKey, type VitalStatus, type Vitals } from '../core/vitals'
-import { useGameStore } from '../state/gameStore'
+import { useGameStore, visibleRequest } from '../state/gameStore'
 import { Avatar } from './Avatar'
 import { EcgTrace, Soundwave, Sparkline } from './Charts'
+import { RequestCard } from './Requests'
 
 const VITAL_ROWS: { key: VitalKey; label: string; format: (v: number) => string }[] = [
   { key: 'hr', label: 'HR', format: (v) => `${Math.round(v)} BPM` },
@@ -21,8 +22,8 @@ export function CrewStrip() {
   const sim = useGameStore((s) => s.sim)
   return (
     <section className="crew-strip">
-      {sim.crew.map((c) => (
-        <CrewSlot key={c.id} crew={c} sim={sim} />
+      {sim.crew.map((c, i) => (
+        <CrewSlot key={c.id} crew={c} sim={sim} align={i < sim.crew.length / 2 ? 'left' : 'right'} />
       ))}
     </section>
   )
@@ -34,11 +35,15 @@ function worstStatus(v: Vitals): VitalStatus {
   return statuses.includes('critical') ? 'critical' : statuses.includes('warning') ? 'warning' : 'normal'
 }
 
-function CrewSlot({ crew, sim }: { crew: CrewState; sim: SimState }) {
+function CrewSlot({ crew, sim, align }: { crew: CrewState; sim: SimState; align: 'left' | 'right' }) {
   const speaking = useGameStore((s) => (s.speaking?.crewId === crew.id ? s.speaking.text : null))
   const unread = useGameStore((s) => s.unread[crew.id] ?? 0)
   const open = useGameStore((s) => s.openCrewId === crew.id)
   const toggleCrew = useGameStore((s) => s.toggleCrew)
+  const focusRequest = useGameStore((s) => s.focusRequest)
+  const shown = useGameStore((s) => visibleRequest(s.sim, s.focusedRequestId))
+  const myRequest = sim.requests.find((r) => r.status === 'pending' && r.crewId === crew.id)
+  const showCard = shown !== null && shown.crewId === crew.id
   /** Viewport rect of the slot while its vitals tooltip is shown. */
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const v = vitals(crew, sim.cabin)
@@ -47,8 +52,8 @@ function CrewSlot({ crew, sim }: { crew: CrewState; sim: SimState }) {
 
   return (
     <article
-      className={`panel crew-slot crew-slot--${status}${speaking ? ' is-speaking' : ''}${crew.alive ? '' : ' is-dead'}${open ? ' is-open' : ''}`}
-      onClick={() => toggleCrew(crew.id)}
+      className={`panel crew-slot crew-slot--${status}${myRequest ? ' has-request' : ''}${speaking ? ' is-speaking' : ''}${crew.alive ? '' : ' is-dead'}${open ? ' is-open' : ''}`}
+      onClick={() => (myRequest && !showCard ? focusRequest(myRequest.id) : toggleCrew(crew.id))}
       onMouseEnter={(e) => setAnchor(e.currentTarget.getBoundingClientRect())}
       onMouseLeave={() => setAnchor(null)}
     >
@@ -67,15 +72,19 @@ function CrewSlot({ crew, sim }: { crew: CrewState; sim: SimState }) {
         ) : (
           <span className="crew-slot__deceased">Deceased · {formatClock(crew.diedAt!)}</span>
         )}
-        {unread > 0 && <span className="badge" title="New messages">MSG {unread}</span>}
+        <span className="crew-slot__badges">
+          {myRequest && <span className="badge badge--request" title="Pending request">REQ</span>}
+          {unread > 0 && <span className="badge" title="New messages">MSG {unread}</span>}
+        </span>
       </div>
 
       <div className={`crew-slot__line${speaking ? ' is-speaking' : crew.messages.length ? '' : ' crew-slot__line--idle'}`}>
         {speaking ?? (crew.messages.at(-1) ? `“${crew.messages.at(-1)!.text}”` : '— No transmission —')}
       </div>
 
-      {open && <MessageLog crew={crew} />}
-      {anchor && !open && <VitalsTooltip crew={crew} vitals={v} anchor={anchor} />}
+      {showCard && <RequestCard request={shown} align={align} />}
+      {open && !showCard && <MessageLog crew={crew} />}
+      {anchor && !open && !showCard && <VitalsTooltip crew={crew} vitals={v} anchor={anchor} />}
     </article>
   )
 }

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "fusion",
+    "from": "Engineer",
+    "trigger": {
+      "type": "atHour",
+      "hour": 3
+    },
+    "expiresHours": 6,
+    "repeatAfterHours": 8,
+    "text": "Commander, let me bring the fusion generator back online. We can't run on reserves forever.",
+    "plan": {
+      "name": "Fusion Generator",
+      "durationHours": null,
+      "items": [
+        {
+          "label": "Fusion output",
+          "resource": "energy",
+          "perHour": 30
+        },
+        {
+          "label": "Generator upkeep",
+          "resource": "materials",
+          "perHour": -1.5
+        }
+      ],
+      "oneTime": [
+        {
+          "label": "Restart parts",
+          "resource": "materials",
+          "amount": -15
+        }
+      ]
+    }
+  },
+  {
+    "id": "fabricator",
+    "from": "Engineer",
+    "trigger": {
+      "type": "hoursLeftBelow",
+      "resource": "materials",
+      "hours": 10
+    },
+    "expiresHours": 6,
+    "repeatAfterHours": 8,
+    "text": "We're nearly out of spare parts. Let me run the fabricator on scrap.",
+    "plan": {
+      "name": "Fabricator",
+      "durationHours": null,
+      "items": [
+        {
+          "label": "Fabricated parts",
+          "resource": "materials",
+          "perHour": 7
+        },
+        {
+          "label": "Fabricator power",
+          "resource": "energy",
+          "perHour": -4
+        }
+      ],
+      "oneTime": []
+    }
+  },
+  {
+    "id": "reclaimer",
+    "from": "Medic",
+    "trigger": {
+      "type": "hoursLeftBelow",
+      "resource": "water",
+      "hours": 24
+    },
+    "expiresHours": 6,
+    "repeatAfterHours": 8,
+    "text": "Water's getting low. Approve the reclaimer and I'll keep everyone hydrated.",
+    "plan": {
+      "name": "Water Reclaimer",
+      "durationHours": null,
+      "items": [
+        {
+          "label": "Reclaimed water",
+          "resource": "water",
+          "perHour": 4
+        },
+        {
+          "label": "Reclaimer pumps",
+          "resource": "energy",
+          "perHour": -3
+        }
+      ],
+      "oneTime": []
+    }
+  },
+  {
+    "id": "hydroponics",
+    "from": "Botanist",
+    "trigger": {
+      "type": "hoursLeftBelow",
+      "resource": "food",
+      "hours": 36
+    },
+    "expiresHours": 6,
+    "repeatAfterHours": 4,
+    "text": "Let me run a hydroponics cycle. Six hours and we'll have fresh food.",
+    "plan": {
+      "name": "Hydroponics Cycle",
+      "durationHours": 6,
+      "items": [
+        {
+          "label": "Crop yield",
+          "resource": "food",
+          "perHour": 4
+        },
+        {
+          "label": "Irrigation",
+          "resource": "water",
+          "perHour": -1.2
+        },
+        {
+          "label": "Grow lamps",
+          "resource": "energy",
+          "perHour": -3
+        }
+      ],
+      "oneTime": []
+    }
+  }
+]

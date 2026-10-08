@@ -1,8 +1,23 @@
 import { create } from 'zustand'
 import crew from '../data/crew.json'
 import dialogue from '../data/dialogue.json'
+import requests from '../data/requests.json'
 import scenario from '../data/scenario.json'
-import { advance, createSim, forecastDepletion, setFlowsEnabled, type AdvanceResult, type Forecast, type SimConfig, type SimEvent, type SimState } from '../core/sim'
+import {
+  advance,
+  approveRequest,
+  createSim,
+  declineRequest,
+  disposePlan,
+  forecastDepletion,
+  togglePlanPaused,
+  type ActionResult,
+  type AdvanceResult,
+  type Forecast,
+  type SimConfig,
+  type SimEvent,
+  type SimState,
+} from '../core/sim'
 import { SPEED_RATE, type Speed } from '../core/time'
 
 /**
@@ -10,7 +25,7 @@ import { SPEED_RATE, type Speed } from '../core/time'
  * notices and restart. Unity equivalent: a GameManager MonoBehaviour raising C# events.
  */
 
-export const SIM_CONFIG = { scenario, crew, dialogue } as unknown as SimConfig
+export const SIM_CONFIG = { scenario, crew, dialogue, requests } as unknown as SimConfig
 
 interface Speech {
   crewId: string
@@ -34,9 +49,13 @@ interface GameStore {
   /** performance.now() timestamp of the automatic restart, while the game-over screen is up. */
   restartAt: number | null
 
-  /** Dev toggle: all scenario producers on/off. Survives restarts. */
-  generatorsOn: boolean
-  toggleGenerators: () => void
+  /** Request whose card is shown; falls back to the oldest pending one. */
+  focusedRequestId: string | null
+  focusRequest: (id: string) => void
+  approve: (requestId: string) => void
+  decline: (requestId: string) => void
+  togglePlan: (planId: string) => void
+  disposePlan: (planId: string) => void
   setSpeed: (speed: Speed) => void
   skip: (minutes: number) => void
   toggleCrew: (id: string) => void
@@ -48,7 +67,6 @@ interface GameStore {
 let minuteAccumulator = 0
 
 const hourOf = (sim: SimState) => Math.floor(sim.minute / 60)
-const GENERATOR_IDS = SIM_CONFIG.scenario.producers.map((p) => p.id)
 
 export const useGameStore = create<GameStore>((set, get) => {
   function apply(result: AdvanceResult, skipped: boolean) {
@@ -79,6 +97,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     })
   }
 
+  /** Player actions on requests / plans: apply their dialogue and refresh the forecast. */
+  function act(result: ActionResult) {
+    if (!result.ok) return set({ notice: { text: result.reason, id: Date.now() } })
+    apply({ state: result.state, events: result.events }, false)
+    set({ forecast: forecastDepletion(result.state, SIM_CONFIG) })
+  }
+
   const initial = createSim(SIM_CONFIG, 1)
   return {
     sim: initial,
@@ -91,12 +116,12 @@ export const useGameStore = create<GameStore>((set, get) => {
     openCrewId: null,
     restartAt: null,
 
-    generatorsOn: false,
-    toggleGenerators: () => {
-      const generatorsOn = !get().generatorsOn
-      const sim = setFlowsEnabled(get().sim, GENERATOR_IDS, generatorsOn)
-      set({ generatorsOn, sim, forecast: forecastDepletion(sim, SIM_CONFIG) })
-    },
+    focusedRequestId: null,
+    focusRequest: (focusedRequestId) => set({ focusedRequestId }),
+    approve: (requestId) => act(approveRequest(get().sim, SIM_CONFIG, requestId)),
+    decline: (requestId) => act(declineRequest(get().sim, SIM_CONFIG, requestId)),
+    togglePlan: (planId) => act(togglePlanPaused(get().sim, planId)),
+    disposePlan: (planId) => act(disposePlan(get().sim, planId)),
 
     setSpeed: (speed) => set({ speed }),
 
@@ -113,7 +138,7 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     restart: () => {
       minuteAccumulator = 0
-      const sim = setFlowsEnabled(createSim(SIM_CONFIG, get().sim.seed + 1), GENERATOR_IDS, get().generatorsOn)
+      const sim = createSim(SIM_CONFIG, get().sim.seed + 1)
       set({
         sim,
         forecast: forecastDepletion(sim, SIM_CONFIG),
@@ -121,6 +146,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         speechQueue: [],
         unread: {},
         openCrewId: null,
+        focusedRequestId: null,
         restartAt: null,
         notice: null,
       })
@@ -163,5 +189,17 @@ export function describe(e: Exclude<SimEvent, { type: 'say' }>, sim: SimState): 
       return `${name(e.crewId)} has died`
     case 'gameOver':
       return 'All crew lost'
+    case 'request':
+      return `${name(e.crewId)} sent a request`
+    case 'requestExpired':
+      return `Request from ${name(e.crewId)} expired`
+    case 'planEnded':
+      return `Plan complete: ${e.name}`
   }
+}
+
+/** The request card to show: the focused one if still pending, else the oldest pending. */
+export function visibleRequest(sim: SimState, focusedId: string | null) {
+  const pending = sim.requests.filter((r) => r.status === 'pending')
+  return pending.find((r) => r.id === focusedId) ?? pending[0] ?? null
 }

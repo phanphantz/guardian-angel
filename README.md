@@ -36,9 +36,10 @@ src/
     sim.ts         Survival scenario: one-minute tick, advance/skip, crew, dialogue
     resources.ts   Energy / Water / Food / Materials, producers & consumers (per hour)
     vitals.ts      HR, SpO₂, core temp, CO₂ derived from cabin + hidden condition
+    requests.ts    Crew requests and plans (per-hour items + one-time costs)
     time.ts        Speeds (pause / 1 min/s / ×10), skips, clock formatting
     station.ts, universe.ts   Station grid + star system (3D backdrop)
-  data/      JSON content: scenario.json (all tuning), crew.json, dialogue.json, modules.json
+  data/      JSON content: scenario.json (all tuning), crew.json, dialogue.json, requests.json, modules.json
   state/     gameStore.ts (sim + speech queue + restart), sceneStore.ts (3D backdrop)
   render/    R3F backdrop scene: floating origin, starfield, bodies, station
   ui/        HUD: TimeBar, ResourcePanel, CrewSlot, GameOver, Avatar, Charts
@@ -48,6 +49,11 @@ public/models/  .glb models, referenced from data/modules.json via "model"
 ## Survival scenario (current build)
 
 Six crew share one living quarter module with a fixed starting stockpile and no production.
+Crew members send **requests** (fusion generator, fabricator, water reclaimer, hydroponics
+cycles). Approving one pays its one-time cost and starts a **plan** whose per-hour items join
+the resource flows; plans can be paused or disposed from the PLANS list. Requests expire if
+ignored and come back after a cooldown. Approving everything keeps the crew alive (10+ days
+in tests); ignoring them lets the slow drain win.
 Materials run out first (life support then needs more energy), then water, food and
 finally energy. Without power, O₂ falls, CO₂ rises and the cabin freezes, and the crew die
 one by one, which shows in their vitals and faces. When everyone is dead, a summary
@@ -59,13 +65,13 @@ appears and the run restarts with the next seed.
   draining or green filling edge (stripe speed follows the net rate), a ghost chunk after
   sudden drops, and a runway badge (time until empty, ∞ when not depleting). Below it an
   IN/OUT meter with the net rate; hover it for macOS-storage-style ratios of every source.
-  GEN ON/OFF in the top bar switches on test generators. All rates are per hour.
-- **Layout:** time controls stacked top-left (clock, speed, skip, GEN toggle), the four
+  All rates are per hour.
+- **Layout:** time controls and the PLANS list stacked top-left, the four
   resources as a strip top-centre on the same row, six crew slots along the bottom.
 - **Crew slot:** name, role, location, a procedural face with 5 expressions, a speaking
   waveform with the latest line, and an unread badge. The border turns amber or red when
   any vital is out of range. Hover for vitals (ECG trace + 24h trends); click for the
-  message log.
+  message log. A pending request shows a REQ badge and a request card above the slot.
 - **Tuning:** every rate, threshold and damage weight lives in `src/data/scenario.json`.
   `npm test` checks the pacing (order of depletion, staggered deaths).
 
