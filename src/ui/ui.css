@@ -226,6 +226,15 @@ button {
   border-bottom: 1px dashed var(--ga-green-dim);
 }
 
+.gauge {
+  transition: opacity 0.15s;
+}
+
+/* While one resource's breakdown is open, the others step back. */
+.gauge.is-dimmed {
+  opacity: 0.3;
+}
+
 .gauge:last-child {
   border-bottom: none;
   padding-bottom: 0;
@@ -480,11 +489,11 @@ button {
 
 /* Hover breakdown of OUT or IN, macOS-storage style: ratio bar + legend. */
 .ratio-tooltip {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 10;
+  position: fixed;
+  z-index: 50;
+  min-width: 240px;
+  color: var(--ga-color-text);
+  text-shadow: 0 0 6px var(--ga-green-glow);
   display: flex;
   flex-direction: column;
   gap: 5px;

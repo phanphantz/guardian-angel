@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore } from '../core/resources'
 import { computeFlows } from '../core/sim'
 import { formatHours, type Speed } from '../core/time'
@@ -18,13 +19,24 @@ export function ResourcePanel() {
   const sim = useGameStore((s) => s.sim)
   const forecast = useGameStore((s) => s.forecast)
   const flows = computeFlows(sim, SIM_CONFIG)
+  // The resource whose IN/OUT breakdown is open; the others dim.
+  const [focused, setFocused] = useState<ResourceId | null>(null)
 
   return (
     <section className="panel resource-panel">
       <div className="panel__header">Resources</div>
       <div className="panel__body">
         {RESOURCE_IDS.map((id) => (
-          <BudgetGauge key={id} id={id} minute={sim.minute} emptyAt={forecast[id]} store={sim.resources[id]} flows={flows.filter((f) => f.resource === id)} />
+          <BudgetGauge
+            key={id}
+            id={id}
+            minute={sim.minute}
+            emptyAt={forecast[id]}
+            store={sim.resources[id]}
+            flows={flows.filter((f) => f.resource === id)}
+            dimmed={focused !== null && focused !== id}
+            onFocusChange={(on) => setFocused((current) => (on ? id : current === id ? null : current))}
+          />
         ))}
       </div>
     </section>
@@ -60,9 +72,14 @@ const RATIO_COLORS: Record<Flow['kind'], string[]> = {
  * Hover breakdown of IN and OUT together, macOS-storage style. Both ratio bars share the
  * flow meter's scale (the larger of the two rates), so their lengths compare directly.
  */
-function FlowBreakdown({ flows, scale }: { flows: Flow[]; scale: number }) {
-  return (
-    <div className="ratio-tooltip" role="tooltip">
+function FlowBreakdown({ flows, scale, anchor }: { flows: Flow[]; scale: number; anchor: DOMRect }) {
+  // Rendered into <body> so the panel's scroll area can't crop it; flips above near the bottom.
+  const below = anchor.bottom < window.innerHeight * 0.65
+  const position = below
+    ? { left: anchor.left, width: anchor.width, top: anchor.bottom + 6 }
+    : { left: anchor.left, width: anchor.width, bottom: window.innerHeight - anchor.top + 6 }
+  return createPortal(
+    <div className="ratio-tooltip" role="tooltip" style={position}>
       {(['producer', 'consumer'] as const).map((kind) => {
         const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
         const total = items.reduce((sum, f) => sum + f.perHour, 0)
@@ -90,7 +107,8 @@ function FlowBreakdown({ flows, scale }: { flows: Flow[]; scale: number }) {
           </div>
         )
       })}
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -134,6 +152,8 @@ function BudgetGauge({
   emptyAt,
   store,
   flows,
+  dimmed,
+  onFocusChange,
 }: {
   id: ResourceId
   minute: number
@@ -141,11 +161,22 @@ function BudgetGauge({
   emptyAt: number | undefined
   store: ResourceStore
   flows: Flow[]
+  dimmed: boolean
+  onFocusChange: (focused: boolean) => void
 }) {
   const meta = RESOURCES[id]
   const speed = useGameStore((st) => st.speed)
   const s = summarize(id, store, flows)
-  const [showFlows, setShowFlows] = useState(false)
+  /** Viewport rect of the IN/OUT meter while its breakdown is open. */
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
+  const open = (e: { currentTarget: HTMLElement }) => {
+    setAnchor(e.currentTarget.getBoundingClientRect())
+    onFocusChange(true)
+  }
+  const close = () => {
+    setAnchor(null)
+    onFocusChange(false)
+  }
   const ghost = useGhost(store.stock, store.capacity * 0.01)
   const hoursLeft = emptyAt === undefined ? Infinity : (emptyAt - minute) / 60
   const level = urgency(store.stock, hoursLeft)
@@ -160,7 +191,7 @@ function BudgetGauge({
   } as const
 
   return (
-    <div className={`gauge gauge--${level}`}>
+    <div className={`gauge gauge--${level}${dimmed ? ' is-dimmed' : ''}`}>
       <div className="gauge__header">
         <span className="gauge__title" style={{ color: meta.color }}>
           <span className="gauge__code">{meta.code}</span> {meta.label}
@@ -183,10 +214,10 @@ function BudgetGauge({
       <div
         className="flow"
         tabIndex={0}
-        onMouseEnter={() => setShowFlows(true)}
-        onMouseLeave={() => setShowFlows(false)}
-        onFocus={() => setShowFlows(true)}
-        onBlur={() => setShowFlows(false)}
+        onMouseEnter={open}
+        onMouseLeave={close}
+        onFocus={open}
+        onBlur={close}
       >
         <div className="flow__bars">
           {(
@@ -214,7 +245,7 @@ function BudgetGauge({
         ) : (
           <span className={`flow__net ${net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}`}>{formatNet(net)}</span>
         )}
-        {showFlows && <FlowBreakdown flows={flows} scale={flowScale} />}
+        {anchor && <FlowBreakdown flows={flows} scale={flowScale} anchor={anchor} />}
       </div>
 
     </div>
