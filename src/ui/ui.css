@@ -430,23 +430,18 @@ button {
   text-align: right;
 }
 
-.flow__row {
+.flow {
   cursor: help;
 }
 
-.flow__row--consumer:hover .flow__label,
-.flow__row--consumer:focus-visible .flow__label {
-  color: var(--ga-color-negative);
-}
-
-.flow__row--producer:hover .flow__label,
-.flow__row--producer:focus-visible .flow__label {
+.flow:hover .flow__label,
+.flow:focus-visible .flow__label {
   color: var(--ga-green);
 }
 
-.flow__row:focus-visible {
+.flow:focus-visible {
   outline: 1px solid var(--ga-green-dim);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 /* Hover breakdown of OUT or IN, macOS-storage style: ratio bar + legend. */
@@ -461,14 +456,21 @@ button {
   gap: 5px;
   padding: var(--ga-space-2) var(--ga-space-3);
   background: #000;
-  border: 1px solid var(--ga-color-negative);
+  border: 1px solid var(--ga-green);
   box-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
   font-size: var(--ga-font-size-s);
   pointer-events: none;
 }
 
-.ratio-tooltip--producer {
-  border-color: var(--ga-green);
+.ratio-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ratio-section--producer {
+  padding-top: 6px;
+  border-top: 1px dashed var(--ga-green-dim);
 }
 
 .ratio-tooltip__title {
@@ -478,7 +480,7 @@ button {
   color: var(--ga-color-negative);
 }
 
-.ratio-tooltip--producer .ratio-tooltip__title {
+.ratio-section--producer .ratio-tooltip__title {
   color: var(--ga-green);
 }
 
