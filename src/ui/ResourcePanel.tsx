@@ -225,8 +225,7 @@ function BudgetGauge({
               { kind: 'consumer', label: 'Out', value: s.usagePerHour, flowing: store.stock > 0 && s.usagePerHour > 0 },
             ] as const
           ).map((row) => (
-            <div key={row.kind} className="flow__row">
-              <span className="flow__label">{row.label}</span>
+            <div key={row.kind} className="flow__row" title={row.label}>
               <span className="flow__track">
                 <span
                   className={`flow__fill flow__fill--${row.kind === 'consumer' ? 'out' : 'in'}${row.flowing ? ' is-flowing' : ''}`}

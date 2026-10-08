@@ -414,12 +414,13 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .flow__net {
   width: 64px;
   font-size: var(--ga-font-size-s);
+  line-height: 1;
   white-space: nowrap;
   text-align: right;
 }
@@ -431,14 +432,9 @@ button {
   font-size: var(--ga-font-size-s);
 }
 
-.flow__label {
-  width: 26px;
-  color: var(--ga-color-text-dim);
-}
-
 .flow__track {
   flex: 1;
-  height: 6px;
+  height: 4px;
   border: 1px solid var(--ga-green-dim);
   overflow: hidden;
 }
@@ -475,11 +471,6 @@ button {
 
 .flow {
   cursor: help;
-}
-
-.flow:hover .flow__label,
-.flow:focus-visible .flow__label {
-  color: var(--ga-green);
 }
 
 .flow:focus-visible {
