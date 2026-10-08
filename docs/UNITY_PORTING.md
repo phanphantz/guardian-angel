@@ -20,7 +20,7 @@ Target: **Unity 6 + URP**, UI Toolkit for UI, glTFast for models.
 | `ui/Charts.tsx` ECG / sparklines | `generateVisualContent` + `Painter2D` on a custom VisualElement |
 | `core/*.test.ts` | NUnit EditMode tests (Unity Test Framework); port the same cases |
 | `data/modules.json` | Same JSON in `Assets/Data/`, loaded into `ScriptableObject`s by an editor importer |
-| `state/store.ts` | `GameState` MonoBehaviour/singleton with C# events (`OnStationChanged`, ...) |
+| `state/sceneStore.ts` | `GameState` MonoBehaviour/singleton with C# events (`OnStationChanged`, ...) |
 | `render/frame.ts` floating origin | `FloatingOrigin` component: each frame sets `transform.position = (Vector3)(worldPos - origin)` |
 | `render/SpaceScene.tsx` camera rig | Cinemachine orbital follow on a target at the origin |
 | Logarithmic depth buffer | Camera stacking (far "system" camera + near "local" camera), or scaled-space rendering for distant bodies |
