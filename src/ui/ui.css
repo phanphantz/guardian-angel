@@ -143,28 +143,17 @@ button {
 }
 
 /* ---------- Top bar ---------- */
+/* Frameless controls, top-right. */
 .topbar {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--ga-space-4);
-  padding: var(--ga-space-2) var(--ga-space-3);
-  border-color: var(--ga-green);
-}
-
-.brand {
+  pointer-events: auto;
+  align-self: flex-end;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--ga-space-3);
 }
 
-.brand__title {
-  font-size: 16px;
-  letter-spacing: 0.4em;
-  color: var(--ga-green);
-}
-
-.topbar__spacer {
-  flex: 1;
+.segmented {
+  background: var(--ga-color-panel);
 }
 
 .clock {

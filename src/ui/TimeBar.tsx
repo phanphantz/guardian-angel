@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SKIPS, formatClock, type Speed } from '../core/time'
-import { SIM_CONFIG, useGameStore } from '../state/gameStore'
+import { useGameStore } from '../state/gameStore'
 
 const SPEEDS: { id: Speed; label: string; title: string }[] = [
   { id: 'paused', label: 'Hold', title: 'Pause' },
@@ -10,7 +10,6 @@ const SPEEDS: { id: Speed; label: string; title: string }[] = [
 
 export function TimeBar() {
   const minute = useGameStore((s) => s.sim.minute)
-  const seed = useGameStore((s) => s.sim.seed)
   const over = useGameStore((s) => s.sim.over)
   const speed = useGameStore((s) => s.speed)
   const setSpeed = useGameStore((s) => s.setSpeed)
@@ -19,14 +18,7 @@ export function TimeBar() {
   const toggleGenerators = useGameStore((s) => s.toggleGenerators)
 
   return (
-    <header className="panel topbar">
-      <div className="brand">
-        <span className="brand__title">GUARDIAN ANGEL</span>
-        <span className="muted">
-          {SIM_CONFIG.scenario.name} · run #{seed}
-        </span>
-      </div>
-      <div className="topbar__spacer" />
+    <header className="topbar">
       <div className="segmented" role="group" aria-label="Generators">
         <button
           className={generatorsOn ? 'is-active' : ''}
