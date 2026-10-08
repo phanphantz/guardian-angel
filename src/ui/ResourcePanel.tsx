@@ -203,10 +203,10 @@ function BudgetGauge({
         )}
       </div>
       <div className="gauge__legend gauge__legend--single">
-        {segments.map((seg) => (
+        {segments.map((seg, i) => (
           <span
             key={seg.label}
-            className={`legend-item${seg.label === 'Usage/h' ? ' legend-item--hoverable' : ''}`}
+            className={`legend-item legend-item--col-${['start', 'center', 'end'][i]}${seg.label === 'Usage/h' ? ' legend-item--hoverable' : ''}`}
             {...(seg.label === 'Usage/h' ? { ...usageHover, tabIndex: 0 } : {})}
           >
             <span className="swatch" style={{ background: seg.color }} />

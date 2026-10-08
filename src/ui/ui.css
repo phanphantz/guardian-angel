@@ -305,9 +305,25 @@ button {
   font-size: var(--ga-font-size-s);
 }
 
+/* Budget legend: usage / free / empty spread evenly across the gauge width. */
 .gauge__legend--single {
   flex-wrap: nowrap;
   white-space: nowrap;
+}
+
+/* Three equal columns so labels line up across every gauge regardless of number width. */
+.legend-item--col-start,
+.legend-item--col-center,
+.legend-item--col-end {
+  flex: 1;
+}
+
+.legend-item--col-center {
+  justify-content: center;
+}
+
+.legend-item--col-end {
+  justify-content: flex-end;
 }
 
 .legend-item {
