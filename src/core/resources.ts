@@ -37,8 +37,8 @@ export interface Flow {
 export interface ResourceSummary {
   productionPerHour: number
   usagePerHour: number
-  /** Stock that current net usage will burn in the next 24 h. */
-  committed24h: number
+  /** Stock the next hour of usage will consume. */
+  nextHourUsage: number
   free: number
   empty: number
   /** Infinity when production covers usage. */
@@ -54,12 +54,12 @@ export function summarize(resource: ResourceId, store: ResourceStore, flows: Flo
     else usagePerHour += f.perHour
   }
   const net = usagePerHour - productionPerHour
-  const committed24h = Math.min(store.stock, Math.max(0, net) * 24)
+  const nextHourUsage = Math.min(store.stock, usagePerHour)
   return {
     productionPerHour,
     usagePerHour,
-    committed24h,
-    free: store.stock - committed24h,
+    nextHourUsage,
+    free: store.stock - nextHourUsage,
     empty: store.capacity - store.stock,
     hoursLeft: net > 0 ? store.stock / net : Infinity,
   }

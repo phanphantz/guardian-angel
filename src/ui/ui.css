@@ -267,6 +267,10 @@ button {
   margin-left: auto;
 }
 
+.gauge__segment--use {
+  min-width: 3px;
+}
+
 .gauge__legend--single {
   flex-wrap: nowrap;
   white-space: nowrap;

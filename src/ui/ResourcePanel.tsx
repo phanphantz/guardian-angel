@@ -137,7 +137,7 @@ function formatNet(perHour: number): string {
   return `${perHour > 0 ? '+' : perHour < 0 ? '−' : '±'}${text}/h`
 }
 
-/** Budget: stock out of capacity, split into what the next 24h will burn, the rest, and free space. */
+/** Budget: stock out of capacity, split into the next hour of usage, the rest, and free space. */
 function BudgetGauge({
   id,
   minute,
@@ -158,7 +158,7 @@ function BudgetGauge({
   const level = urgency(store.stock, hoursLeft)
   const net = s.productionPerHour - s.usagePerHour
   const segments: Segment[] = [
-    { label: '24h use', value: s.committed24h, color: meta.color },
+    { label: 'Usage/h', value: s.nextHourUsage, color: meta.color },
     { label: 'Free', value: s.free, color: `${meta.color}66` },
     { label: 'Empty', value: s.empty, color: 'rgba(255, 255, 255, 0.06)' },
   ]
@@ -179,7 +179,7 @@ function BudgetGauge({
           seg.value > 0 ? (
             <div
               key={seg.label}
-              className={`gauge__segment${seg.label === '24h use' ? ' gauge__segment--use' : ''}`}
+              className={`gauge__segment${seg.label === 'Usage/h' ? ' gauge__segment--use' : ''}`}
               title={`${seg.label}: ${whole(seg.value)}`}
               style={{ width: `${(seg.value / store.capacity) * 100}%`, background: seg.color }}
             />
