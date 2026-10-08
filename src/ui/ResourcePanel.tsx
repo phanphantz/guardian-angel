@@ -87,7 +87,7 @@ function FlowBreakdown({ flows, scale, anchor }: { flows: Flow[]; scale: number;
         return (
           <div key={kind} className={`ratio-section ratio-section--${kind}`}>
             <div className="ratio-tooltip__title">
-              <span>{kind === 'consumer' ? 'Out · usage' : 'In · production'}</span>
+              <span>{kind === 'consumer' ? 'Usage' : 'Production'}</span>
               <span>{fmt(total)}/h</span>
             </div>
             <div className="ratio-bar">
