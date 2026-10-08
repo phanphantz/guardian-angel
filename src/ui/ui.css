@@ -271,6 +271,86 @@ button {
   min-width: 3px;
 }
 
+.gauge {
+  position: relative;
+}
+
+.legend-item--hoverable {
+  cursor: help;
+  border-radius: 3px;
+}
+
+.legend-item--hoverable:hover,
+.legend-item--hoverable:focus-visible {
+  color: var(--ga-color-text);
+  outline: 1px solid rgba(255, 92, 92, 0.5);
+  outline-offset: 2px;
+}
+
+.gauge__segment--use {
+  cursor: help;
+}
+
+/* Usage breakdown, floating just below the bar. */
+.usage-tooltip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--ga-space-2) var(--ga-space-3);
+  background: #0e1a30;
+  border: 1px solid rgba(255, 92, 92, 0.55);
+  border-radius: var(--ga-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  font-size: var(--ga-font-size-s);
+  pointer-events: none;
+}
+
+.usage-tooltip__title {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff8a8a;
+}
+
+.usage-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ga-space-2);
+}
+
+.usage-tooltip__label {
+  width: 120px;
+}
+
+.usage-tooltip__track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.usage-tooltip__fill {
+  display: block;
+  height: 100%;
+  background: #ff5c5c;
+}
+
+.usage-tooltip__value {
+  margin-left: auto;
+  font-family: var(--ga-font-mono);
+}
+
+.usage-tooltip__total {
+  padding-top: 4px;
+  border-top: 1px solid var(--ga-color-border);
+  font-weight: 600;
+}
+
 .gauge__legend--single {
   flex-wrap: nowrap;
   white-space: nowrap;

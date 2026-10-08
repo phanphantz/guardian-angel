@@ -55,9 +55,9 @@ appears and the run restarts with the next seed.
 
 - **Time:** pause, normal (1 game min/s), ×10, and skip +1h / +6h / +1d. Skips stop
   early on depletion, critical condition or death, so nothing happens off-screen.
-- **Resources:** macOS-storage-style bars with Production (by source), Budget
-  (usage per hour / free / empty, net rate, forecast time it runs out) and Usage (by consumer) tabs.
-  All rates are per hour.
+- **Resources:** macOS-storage-style bars with Production (by source) and Budget
+  (usage per hour / free / empty, net rate, forecast time it runs out) tabs. Hover the red
+  usage fill or its legend label for the per-consumer breakdown. All rates are per hour.
 - **Crew slot:** name, role, location, a procedural face with 5 expressions, vitals with an
   ECG trace and 24h trends, a speaking waveform with the latest line, and an unread
   badge. Click a slot for its message log.

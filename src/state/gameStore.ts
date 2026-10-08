@@ -12,7 +12,7 @@ import { SPEED_RATE, type Speed } from '../core/time'
 
 export const SIM_CONFIG = { scenario, crew, dialogue } as unknown as SimConfig
 
-export type ResourceTab = 'production' | 'budget' | 'usage'
+export type ResourceTab = 'production' | 'budget'
 
 interface Speech {
   crewId: string
