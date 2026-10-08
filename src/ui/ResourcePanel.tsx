@@ -26,7 +26,6 @@ export function ResourcePanel() {
         {RESOURCE_IDS.map((id) => (
           <BudgetGauge key={id} id={id} minute={sim.minute} emptyAt={forecast[id]} store={sim.resources[id]} flows={flows.filter((f) => f.resource === id)} />
         ))}
-        <span className="muted">All rates are per game hour.</span>
       </div>
     </section>
   )
@@ -209,7 +208,9 @@ function BudgetGauge({
         </div>
         {/* Net replaces the per-row rates; exact OUT / IN rates live in the hover breakdown. */}
         {level === 'depleted' && net < 0 ? (
-          <span className="flow__net negative">Unmet {formatNet(-net).slice(1)}</span>
+          <span className="flow__net flow__net--unmet negative" title={`Unmet demand: ${fmt(-net)}/h (stock is empty)`}>
+            {formatNet(net)}
+          </span>
         ) : (
           <span className={`flow__net ${net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}`}>{formatNet(net)}</span>
         )}
