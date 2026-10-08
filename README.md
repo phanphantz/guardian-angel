@@ -55,10 +55,11 @@ appears and the run restarts with the next seed.
 
 - **Time:** pause, normal (1 game min/s), ×10, and skip +1h / +6h / +1d. Skips stop
   early on depletion, critical condition or death, so nothing happens off-screen.
-- **Resources:** Production (by source) and Budget tabs. Budget shows a stock bar
-  (fill vs empty) with a live red draining edge whose stripe speed follows the drain rate,
-  a ghost chunk after sudden drops, an OUT/IN per-hour flow meter (hover for the
-  per-consumer breakdown), net rate and forecast time until empty. All rates are per hour.
+- **Resources:** one gauge per resource: a stock bar (fill vs empty) with a live red
+  draining or green filling edge whose stripe speed follows the net rate, a ghost chunk
+  after sudden drops, an OUT/IN per-hour flow meter (hover for the usage and production
+  breakdown), net rate, and "Empty in…" / "Full in…". GEN ON/OFF in the top bar switches
+  on test generators. All rates are per hour.
 - **Crew slot:** name, role, location, a procedural face with 5 expressions, vitals with an
   ECG trace and 24h trends, a speaking waveform with the latest line, and an unread
   badge. Click a slot for its message log.

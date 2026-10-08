@@ -12,8 +12,6 @@ import { SPEED_RATE, type Speed } from '../core/time'
 
 export const SIM_CONFIG = { scenario, crew, dialogue } as unknown as SimConfig
 
-export type ResourceTab = 'production' | 'budget'
-
 interface Speech {
   crewId: string
   text: string
@@ -28,7 +26,6 @@ interface GameStore {
   /** When each resource will actually run out. Refreshed once per game hour. */
   forecast: Forecast
   speed: Speed
-  resourceTab: ResourceTab
   notice: { text: string; id: number } | null
   speaking: (Speech & { until: number }) | null
   speechQueue: Speech[]
@@ -41,7 +38,6 @@ interface GameStore {
   generatorsOn: boolean
   toggleGenerators: () => void
   setSpeed: (speed: Speed) => void
-  setResourceTab: (tab: ResourceTab) => void
   skip: (minutes: number) => void
   toggleCrew: (id: string) => void
   restart: () => void
@@ -88,7 +84,6 @@ export const useGameStore = create<GameStore>((set, get) => {
     sim: initial,
     forecast: forecastDepletion(initial, SIM_CONFIG),
     speed: 'normal',
-    resourceTab: 'budget',
     notice: null,
     speaking: null,
     speechQueue: [],
@@ -104,7 +99,6 @@ export const useGameStore = create<GameStore>((set, get) => {
     },
 
     setSpeed: (speed) => set({ speed }),
-    setResourceTab: (resourceTab) => set({ resourceTab }),
 
     skip: (minutes) => {
       const { sim } = get()

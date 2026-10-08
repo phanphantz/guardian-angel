@@ -133,12 +133,6 @@ button {
   font-family: var(--ga-font-mono);
 }
 
-.swatch {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-}
-
 .button {
   padding: var(--ga-space-2) var(--ga-space-3);
   border: 1px solid var(--ga-green);
@@ -223,31 +217,6 @@ button {
   flex-shrink: 0;
 }
 
-.tabs {
-  display: flex;
-  border-bottom: 1px solid var(--ga-green);
-}
-
-.tabs button {
-  flex: 1;
-  background: transparent;
-  border: none;
-  padding: 5px var(--ga-space-2);
-  font-size: var(--ga-font-size-s);
-  letter-spacing: 0.18em;
-  color: var(--ga-green-mid);
-}
-
-.tabs button:hover {
-  color: var(--ga-green);
-}
-
-.tabs button.is-active {
-  background: var(--ga-green);
-  color: #000;
-  text-shadow: none;
-}
-
 .gauge {
   position: relative;
   display: flex;
@@ -277,41 +246,6 @@ button {
 .gauge__value {
   display: flex;
   align-items: baseline;
-}
-
-.gauge__bar {
-  display: flex;
-  height: 12px;
-  overflow: hidden;
-  border: 1px solid var(--ga-green-dim);
-  background: #000;
-  gap: 1px;
-}
-
-.gauge__segment {
-  height: 100%;
-  transition: width 0.4s;
-}
-
-.gauge__legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px var(--ga-space-3);
-  font-size: var(--ga-font-size-s);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.legend-item__value {
-  color: var(--ga-color-text-dim);
-}
-
-.legend-item--end {
-  margin-left: auto;
 }
 
 .gauge__footer {
@@ -434,7 +368,7 @@ button {
   }
 }
 
-/* OUT (usage) vs IN (production) per hour. Hover for the usage breakdown. */
+/* OUT (usage) vs IN (production) per hour. Hover for the breakdown. */
 .flow {
   position: relative;
   display: flex;
@@ -506,7 +440,7 @@ button {
   color: var(--ga-color-negative);
 }
 
-/* Usage breakdown, floating just below the flow meter. */
+/* Usage + production breakdown, floating just below the flow meter. */
 .usage-tooltip {
   position: absolute;
   left: 0;
@@ -518,8 +452,8 @@ button {
   gap: 4px;
   padding: var(--ga-space-2) var(--ga-space-3);
   background: #000;
-  border: 1px solid var(--ga-color-negative);
-  box-shadow: 0 0 16px rgba(255, 59, 48, 0.25);
+  border: 1px solid var(--ga-green);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
   font-size: var(--ga-font-size-s);
   pointer-events: none;
 }
@@ -556,9 +490,17 @@ button {
   margin-left: auto;
 }
 
-.usage-tooltip__total {
-  padding-top: 4px;
+.usage-tooltip__title--producer {
+  color: var(--ga-green);
+}
+
+.usage-tooltip__fill--producer {
+  background: var(--ga-green);
+}
+
+.usage-tooltip__divider {
   border-top: 1px dashed var(--ga-green-dim);
+  margin: 2px 0;
 }
 
 /* ---------- Crew ---------- */

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore, type ResourceSummary } from '../core/resources'
 import { computeFlows } from '../core/sim'
 import { formatHoursLong, type Speed } from '../core/time'
-import { SIM_CONFIG, useGameStore, type ResourceTab } from '../state/gameStore'
+import { SIM_CONFIG, useGameStore } from '../state/gameStore'
 
 /** Resource colors are the only non-terminal hues in the HUD besides alerts. */
 const RESOURCES: Record<ResourceId, { label: string; code: string; color: string }> = {
@@ -12,85 +12,23 @@ const RESOURCES: Record<ResourceId, { label: string; code: string; color: string
   materials: { label: 'Materials', code: 'MAT', color: '#d0a77c' },
 }
 
-/** Categorical colors for producer / consumer segments, assigned by position. */
-const SEGMENT_COLORS = ['#39ff6a', '#22b84a', '#127a2f', '#8dffab', '#1f6b35', '#5cff8a']
-
-const TABS: { id: ResourceTab; label: string }[] = [
-  { id: 'production', label: 'Production' },
-  { id: 'budget', label: 'Budget' },
-]
-
-interface Segment {
-  label: string
-  value: number
-  color: string
-}
-
 const fmt = (v: number) => (v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(1))
 
 export function ResourcePanel() {
   const sim = useGameStore((s) => s.sim)
-  const tab = useGameStore((s) => s.resourceTab)
-  const setTab = useGameStore((s) => s.setResourceTab)
   const forecast = useGameStore((s) => s.forecast)
   const flows = computeFlows(sim, SIM_CONFIG)
 
   return (
     <section className="panel resource-panel">
-      <div className="tabs" role="tablist">
-        {TABS.map((t) => (
-          <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'is-active' : ''} onClick={() => setTab(t.id)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <div className="panel__header">Resources</div>
       <div className="panel__body">
-        {RESOURCE_IDS.map((id) =>
-          tab === 'budget' ? (
-            <BudgetGauge key={id} id={id} minute={sim.minute} emptyAt={forecast[id]} store={sim.resources[id]} flows={flows.filter((f) => f.resource === id)} />
-          ) : (
-            <ProductionGauge key={id} id={id} store={sim.resources[id]} flows={flows.filter((f) => f.resource === id)} />
-          ),
-        )}
+        {RESOURCE_IDS.map((id) => (
+          <BudgetGauge key={id} id={id} minute={sim.minute} emptyAt={forecast[id]} store={sim.resources[id]} flows={flows.filter((f) => f.resource === id)} />
+        ))}
         <span className="muted">All rates are per game hour.</span>
       </div>
     </section>
-  )
-}
-
-/** Production: per-hour output split by source, scaled against usage. */
-function ProductionGauge({ id, store, flows }: { id: ResourceId; store: ResourceStore; flows: Flow[] }) {
-  const meta = RESOURCES[id]
-  const s = summarize(id, store, flows)
-  const scale = Math.max(s.productionPerHour, s.usagePerHour, 0.0001)
-  const segments: Segment[] = flows
-    .filter((f) => f.kind === 'producer' && f.perHour > 0)
-    .map((f, i) => ({ label: f.label, value: f.perHour, color: SEGMENT_COLORS[i % SEGMENT_COLORS.length] }))
-
-  return (
-    <div className="gauge">
-      <div className="gauge__header">
-        <span className="gauge__title" style={{ color: meta.color }}>
-          <span className="gauge__code">{meta.code}</span> {meta.label}
-        </span>
-        <span className="gauge__value">{fmt(s.productionPerHour)}/h</span>
-      </div>
-      <div className="gauge__bar">
-        {segments.map((seg) => (
-          <div key={seg.label} className="gauge__segment" title={`${seg.label}: ${fmt(seg.value)}/h`} style={{ width: `${(seg.value / scale) * 100}%`, background: seg.color }} />
-        ))}
-      </div>
-      <div className="gauge__legend">
-        {segments.length === 0 && <span className="muted">No production</span>}
-        {segments.map((seg) => (
-          <span key={seg.label} className="legend-item">
-            <span className="swatch" style={{ background: seg.color }} />
-            {seg.label} <span className="legend-item__value">{fmt(seg.value)}</span>
-          </span>
-        ))}
-        <span className="legend-item legend-item--end muted">Usage {fmt(s.usagePerHour)}/h</span>
-      </div>
-    </div>
   )
 }
 
@@ -113,33 +51,31 @@ function formatNet(perHour: number): string {
   return `${perHour > 0 ? '+' : perHour < 0 ? '−' : '±'}${text}/h`
 }
 
-/** Floating breakdown of per-hour usage by consumer, shown below the bar. */
-function UsageBreakdown({ flows, summary }: { flows: Flow[]; summary: ResourceSummary }) {
-  const consumers = flows.filter((f) => f.kind === 'consumer' && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
-  const total = summary.usagePerHour || 1
+/** Floating per-hour breakdown: what consumes this resource and what produces it. */
+function FlowBreakdown({ flows, summary }: { flows: Flow[]; summary: ResourceSummary }) {
+  const section = (kind: Flow['kind'], title: string, total: number, empty: string) => {
+    const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
+    return (
+      <>
+        <div className={`usage-tooltip__title usage-tooltip__title--${kind}`}>{title}</div>
+        {items.length === 0 && <span className="muted">{empty}</span>}
+        {items.map((f) => (
+          <div key={f.id} className="usage-tooltip__row">
+            <span className="usage-tooltip__label">{f.label}</span>
+            <span className="usage-tooltip__track">
+              <span className={`usage-tooltip__fill usage-tooltip__fill--${kind}`} style={{ width: `${(f.perHour / (total || 1)) * 100}%` }} />
+            </span>
+            <span className="usage-tooltip__value">{fmt(f.perHour)}/h</span>
+          </div>
+        ))}
+      </>
+    )
+  }
   return (
     <div className="usage-tooltip" role="tooltip">
-      <div className="usage-tooltip__title">Usage per hour</div>
-      {consumers.length === 0 && <span className="muted">Nothing is consuming this</span>}
-      {consumers.map((f) => (
-        <div key={f.id} className="usage-tooltip__row">
-          <span className="usage-tooltip__label">{f.label}</span>
-          <span className="usage-tooltip__track">
-            <span className="usage-tooltip__fill" style={{ width: `${(f.perHour / total) * 100}%` }} />
-          </span>
-          <span className="usage-tooltip__value">{fmt(f.perHour)}/h</span>
-        </div>
-      ))}
-      <div className="usage-tooltip__row usage-tooltip__total">
-        <span className="usage-tooltip__label">Total</span>
-        <span className="usage-tooltip__value">{fmt(summary.usagePerHour)}/h</span>
-      </div>
-      {summary.productionPerHour > 0 && (
-        <div className="usage-tooltip__row muted">
-          <span className="usage-tooltip__label">Offset by production</span>
-          <span className="usage-tooltip__value">−{fmt(summary.productionPerHour)}/h</span>
-        </div>
-      )}
+      {section('consumer', `Usage · ${fmt(summary.usagePerHour)}/h`, summary.usagePerHour, 'Nothing is consuming this')}
+      <div className="usage-tooltip__divider" />
+      {section('producer', `Production · ${fmt(summary.productionPerHour)}/h`, summary.productionPerHour, 'No production')}
     </div>
   )
 }
@@ -260,7 +196,7 @@ function BudgetGauge({
           </span>
           <span className="flow__value">{fmt(s.productionPerHour)}/h</span>
         </div>
-        {showUsage && <UsageBreakdown flows={flows} summary={s} />}
+        {showUsage && <FlowBreakdown flows={flows} summary={s} />}
       </div>
 
       <div className="gauge__footer">
