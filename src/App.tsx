@@ -28,8 +28,10 @@ export default function App() {
       <SpaceScene />
       <div className="scene-dim" />
       <div className="hud">
-        <TimeBar />
-        <ResourcePanel />
+        <div className="hud__top">
+          <TimeBar />
+          <ResourcePanel />
+        </div>
         <div className="hud__spacer" />
         <CrewStrip />
       </div>

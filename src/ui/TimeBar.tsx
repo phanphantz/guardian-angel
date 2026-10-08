@@ -19,17 +19,6 @@ export function TimeBar() {
 
   return (
     <header className="topbar">
-      <div className="segmented" role="group" aria-label="Generators">
-        <button
-          className={generatorsOn ? 'is-active' : ''}
-          aria-pressed={generatorsOn}
-          title="Switch every resource generator on or off (prototype test control)"
-          disabled={over}
-          onClick={toggleGenerators}
-        >
-          Gen {generatorsOn ? 'On' : 'Off'}
-        </button>
-      </div>
       <span className="clock">{formatClock(minute)}</span>
       <div className="segmented" role="group" aria-label="Time speed">
         {SPEEDS.map((s) => (
@@ -44,6 +33,17 @@ export function TimeBar() {
             {s.label}
           </button>
         ))}
+      </div>
+      <div className="segmented" role="group" aria-label="Generators">
+        <button
+          className={generatorsOn ? 'is-active' : ''}
+          aria-pressed={generatorsOn}
+          title="Switch every resource generator on or off (prototype test control)"
+          disabled={over}
+          onClick={toggleGenerators}
+        >
+          Gen {generatorsOn ? 'On' : 'Off'}
+        </button>
       </div>
     </header>
   )
