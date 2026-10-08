@@ -538,6 +538,12 @@ button {
 .ratio-section--consumer {
   padding-top: 6px;
   border-top: 1px dashed var(--ga-green-dim);
+  color: var(--ga-color-negative);
+  text-shadow: 0 0 6px rgba(255, 59, 48, 0.45);
+}
+
+.ratio-section--consumer .ratio-legend__share {
+  color: rgba(255, 59, 48, 0.7);
 }
 
 .ratio-tooltip__title {
