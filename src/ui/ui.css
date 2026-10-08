@@ -469,11 +469,11 @@ button {
   animation-iteration-count: infinite;
 }
 
-.flow {
+.resource-panel .gauge {
   cursor: help;
 }
 
-.flow:focus-visible {
+.resource-panel .gauge:focus-visible {
   outline: 1px solid var(--ga-green-dim);
   outline-offset: 2px;
 }
@@ -496,7 +496,7 @@ button {
   pointer-events: none;
 }
 
-/* ^ pointing at the IN/OUT meter (v when the tooltip sits above it). */
+/* ^ pointing at the hovered resource (v when the tooltip sits above it). */
 .ratio-tooltip__caret {
   position: absolute;
   left: 50%;

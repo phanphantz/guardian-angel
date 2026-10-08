@@ -167,7 +167,7 @@ function BudgetGauge({
   const meta = RESOURCES[id]
   const speed = useGameStore((st) => st.speed)
   const s = summarize(id, store, flows)
-  /** Viewport rect of the IN/OUT meter while its breakdown is open. */
+  /** Viewport rect of the whole gauge while its breakdown is open. */
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const open = (e: { currentTarget: HTMLElement }) => {
     setAnchor(e.currentTarget.getBoundingClientRect())
@@ -191,7 +191,14 @@ function BudgetGauge({
   } as const
 
   return (
-    <div className={`gauge gauge--${level}${dimmed ? ' is-dimmed' : ''}`}>
+    <div
+      className={`gauge gauge--${level}${dimmed ? ' is-dimmed' : ''}`}
+      tabIndex={0}
+      onMouseEnter={open}
+      onMouseLeave={close}
+      onFocus={open}
+      onBlur={close}
+    >
       <div className="gauge__header">
         <span className="gauge__title" style={{ color: meta.color }}>
           <span className="gauge__code">{meta.code}</span> {meta.label}
@@ -211,14 +218,7 @@ function BudgetGauge({
       <Runway level={level} draining={draining} hoursLeft={hoursLeft} />
       </div>
 
-      <div
-        className="flow"
-        tabIndex={0}
-        onMouseEnter={open}
-        onMouseLeave={close}
-        onFocus={open}
-        onBlur={close}
-      >
+      <div className="flow">
         <div className="flow__bars">
           {(
             [
