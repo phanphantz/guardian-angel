@@ -1,0 +1,104 @@
+{
+  "id": "living-quarters-drain",
+  "name": "Living Quarters: Slow Drain",
+  "location": "Living Quarters",
+  "startHour": 8,
+  "stockVariance": 0.1,
+  "resources": {
+    "energy": {
+      "stock": 1530,
+      "capacity": 2000
+    },
+    "water": {
+      "stock": 130,
+      "capacity": 400
+    },
+    "food": {
+      "stock": 100,
+      "capacity": 300
+    },
+    "materials": {
+      "stock": 90,
+      "capacity": 500
+    }
+  },
+  "producers": [],
+  "consumers": [
+    {
+      "id": "lifeSupport",
+      "label": "Life Support",
+      "resource": "energy",
+      "perHour": 12,
+      "scale": "fixed",
+      "degradedWithout": "materials"
+    },
+    {
+      "id": "heating",
+      "label": "Heating",
+      "resource": "energy",
+      "perHour": 6,
+      "scale": "fixed",
+      "degradedWithout": "materials"
+    },
+    {
+      "id": "maintenance",
+      "label": "Maintenance",
+      "resource": "materials",
+      "perHour": 5,
+      "scale": "fixed"
+    },
+    {
+      "id": "hygiene",
+      "label": "Hygiene",
+      "resource": "water",
+      "perHour": 0.2,
+      "scale": "perCrew"
+    },
+    {
+      "id": "drinking",
+      "label": "Drinking",
+      "resource": "water",
+      "perHour": 0.4,
+      "scale": "perCrewMetabolism"
+    },
+    {
+      "id": "rations",
+      "label": "Rations",
+      "resource": "food",
+      "perHour": 0.35,
+      "scale": "perCrewMetabolism"
+    }
+  ],
+  "degradedMultiplier": 1.6,
+  "cabin": {
+    "o2": 21,
+    "co2": 800,
+    "temp": 21,
+    "o2DropPerCrewHour": 0.15,
+    "co2RisePerCrewHour": 350,
+    "coldTemp": -30,
+    "coolingRate": 0.15,
+    "recoveryRate": 1
+  },
+  "crew": {
+    "traitVariance": 0.35,
+    "hydrationLossPerHour": 2.5,
+    "satietyLossPerHour": 1.5,
+    "recoveryPerHour": 5,
+    "healthRegenPerHour": 0.5
+  },
+  "idleChatterHours": [
+    3,
+    7
+  ],
+  "historyIntervalMinutes": 30,
+  "historyLength": 48,
+  "damage": {
+    "_comment": "Health lost per hour per unit beyond each threshold, before frailty.",
+    "hypoxiaPerSpo2Below90": 0.5,
+    "co2PerThousandPpmAbove5000": 1,
+    "coldPerDegreeBelow35": 4,
+    "dehydrationPerPointBelow50": 0.15,
+    "starvationPerPointBelow30": 0.04
+  }
+}

@@ -1,0 +1,8 @@
+[
+  { "id": "aria", "name": "Aria Voss", "role": "Commander", "color": "#7fd4ff", "skin": "#e8b896", "hair": "#2b1d14", "hairStyle": 0, "baseHr": 64 },
+  { "id": "dmitri", "name": "Dmitri Kael", "role": "Engineer", "color": "#ffb347", "skin": "#f1c9a5", "hair": "#8a5a2b", "hairStyle": 1, "baseHr": 70 },
+  { "id": "mira", "name": "Mira Okafor", "role": "Medic", "color": "#ff7a9a", "skin": "#8d5a3b", "hair": "#121212", "hairStyle": 2, "baseHr": 68 },
+  { "id": "juno", "name": "Juno Reyes", "role": "Botanist", "color": "#7be3a5", "skin": "#c68e64", "hair": "#4a2a1a", "hairStyle": 3, "baseHr": 74 },
+  { "id": "tomas", "name": "Tomas Lindqvist", "role": "Pilot", "color": "#b79cff", "skin": "#f3d3bd", "hair": "#d9c27a", "hairStyle": 1, "baseHr": 60 },
+  { "id": "sena", "name": "Sena Hart", "role": "Scientist", "color": "#ffd27f", "skin": "#e0ac85", "hair": "#5b3a6e", "hairStyle": 2, "baseHr": 72 }
+]

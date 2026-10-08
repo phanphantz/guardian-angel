@@ -4,7 +4,7 @@ import { createStation, placeModule, removeModule, type Cell, type ModuleDef, ty
 import { generateSystem, type StarSystem } from '../core/universe'
 
 /**
- * UI-facing game state. Equivalent to a GameManager + events in Unity:
+ * State for the 3D backdrop (star system + station building). Equivalent to a GameManager + events in Unity:
  * views read from here, and every mutation goes through a core/ function.
  */
 
@@ -23,6 +23,8 @@ interface GameState {
   buildType: string | null
   selectedModuleId: string | null
   timeScale: number
+  /** World labels on planets/station. Off while the scene is only a backdrop. */
+  labelsVisible: boolean
   message: { text: string; id: number } | null
 
   setFocus: (focus: string) => void
@@ -41,6 +43,7 @@ export const useGame = create<GameState>((set, get) => ({
   buildType: null,
   selectedModuleId: null,
   timeScale: 60,
+  labelsVisible: false,
   message: null,
 
   setFocus: (focus) => set({ focus, buildType: null, selectedModuleId: null }),

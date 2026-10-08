@@ -33,16 +33,41 @@ npm run build      # production build in dist/
 ```
 src/
   core/      Pure TypeScript simulation. No React, no three.js. Ports 1:1 to C#.
-  data/      JSON definitions (station modules, ...). Read by both web and Unity.
-  state/     Zustand store (Unity: GameManager + events). The only place that calls core/.
-  render/    R3F scene: floating origin, starfield, bodies, station. (Unity: MonoBehaviours)
-  ui/        React HUD panels + CSS tokens. (Unity: UI Toolkit UXML/USS)
+    sim.ts         Survival scenario: one-minute tick, advance/skip, crew, dialogue
+    resources.ts   Energy / Water / Food / Materials, producers & consumers (per hour)
+    vitals.ts      HR, SpO₂, core temp, CO₂ derived from cabin + hidden condition
+    time.ts        Speeds (pause / 1 min/s / ×10), skips, clock formatting
+    station.ts, universe.ts   Station grid + star system (3D backdrop)
+  data/      JSON content: scenario.json (all tuning), crew.json, dialogue.json, modules.json
+  state/     gameStore.ts (sim + speech queue + restart), sceneStore.ts (3D backdrop)
+  render/    R3F backdrop scene: floating origin, starfield, bodies, station
+  ui/        HUD: TimeBar, ResourcePanel, CrewSlot, GameOver, Avatar, Charts
 public/models/  .glb models, referenced from data/modules.json via "model"
 ```
+
+## Survival scenario (current build)
+
+Six crew share one living quarter module with a fixed starting stockpile and no production.
+Materials run out first (life support then needs more energy), then water, food and
+finally energy. Without power, O₂ falls, CO₂ rises and the cabin freezes, and the crew die
+one by one, which shows in their vitals and faces. When everyone is dead, a summary
+appears and the run restarts with the next seed.
+
+- **Time:** pause, normal (1 game min/s), ×10, and skip +1h / +6h / +1d. Skips stop
+  early on depletion, critical condition or death, so nothing happens off-screen.
+- **Resources:** macOS-storage-style bars with Production (by source), Budget
+  (next 24h / free / empty, plus time until it runs out) and Usage (by consumer) tabs.
+  All rates are per hour.
+- **Crew slot:** name, role, location, a procedural face with 5 expressions, vitals with an
+  ECG trace and 24h trends, a speaking waveform with the latest line, and an unread
+  badge. Click a slot for its message log.
+- **Tuning:** every rate, threshold and damage weight lives in `src/data/scenario.json`.
+  `npm test` checks the pacing (order of depletion, staggered deaths).
 
 Rules that keep the Unity port cheap:
 
 1. **`core/` stays engine-agnostic.** A test fails if it imports React or three.js.
+   The sim state is plain data with a serializable RNG, so runs are reproducible from a seed.
 2. **Game content lives in `data/*.json`**, not in code.
 3. **1 unit = 1 meter, Y-up.** Convert handedness only at the boundary (`toUnity` in `core/units.ts`).
 4. **Positions are float64 in the sim.** The renderer only ever sees offsets from a

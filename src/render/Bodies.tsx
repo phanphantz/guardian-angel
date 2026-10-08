@@ -3,7 +3,7 @@ import { useMemo, useRef } from 'react'
 import { BufferGeometry, CanvasTexture, Group, LineLoop, Vector3 } from 'three'
 import { length, sub, formatDistance } from '../core/units'
 import type { Body } from '../core/universe'
-import { STATION_FOCUS, useGame } from '../state/store'
+import { STATION_FOCUS, useGame } from '../state/sceneStore'
 import { frame, toLocal } from './frame'
 import { WorldLabel } from './WorldLabel'
 

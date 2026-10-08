@@ -4,7 +4,7 @@ import { Suspense, useMemo, useRef, useState } from 'react'
 import { Group, Quaternion, Vector3 } from 'three'
 import { CELL_SIZE, buildSites, cellKey, connections, type Cell, type ModuleDef, type ModuleInstance } from '../core/station'
 import { formatDistance, length, sub } from '../core/units'
-import { MODULE_DEFS, STATION_FOCUS, useGame } from '../state/store'
+import { MODULE_DEFS, STATION_FOCUS, useGame } from '../state/sceneStore'
 import { frame, toLocal } from './frame'
 import { WorldLabel } from './WorldLabel'
 

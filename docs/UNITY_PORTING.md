@@ -10,6 +10,14 @@ Target: **Unity 6 + URP**, UI Toolkit for UI, glTFast for models.
 | `core/rng.ts` mulberry32 | Same algorithm in C# with `uint` math. Same seed gives the same universe |
 | `core/universe.ts` | Plain C# static class `UniverseGen` |
 | `core/station.ts` | Plain C# `Station` class + `StationRules` static methods |
+| `core/sim.ts` `tick` / `advance` | Plain C# `SurvivalSim` with `Tick()` and `Advance(minutes, stopOnEvents)`. Drive it from a MonoBehaviour accumulator, not from `Update` delta directly |
+| `core/resources.ts`, `core/vitals.ts` | Plain C# static classes. The rules carry over unchanged |
+| `core/rng.ts` `rngNext` | `uint` state field on the sim, same math |
+| `data/scenario.json`, `crew.json`, `dialogue.json` | `ScriptableObject`s (or keep JSON + `JsonUtility`) |
+| `state/gameStore.ts` speech queue / restart | `GameManager` + `SpeechQueue` components |
+| `ui/CrewSlot.tsx`, `ui/ResourcePanel.tsx` | `CrewSlot.uxml`, `ResourceGauge.uxml` (custom VisualElements) |
+| `ui/Avatar.tsx` expressions | Sprite per `Expression` enum value |
+| `ui/Charts.tsx` ECG / sparklines | `generateVisualContent` + `Painter2D` on a custom VisualElement |
 | `core/*.test.ts` | NUnit EditMode tests (Unity Test Framework); port the same cases |
 | `data/modules.json` | Same JSON in `Assets/Data/`, loaded into `ScriptableObject`s by an editor importer |
 | `state/store.ts` | `GameState` MonoBehaviour/singleton with C# events (`OnStationChanged`, ...) |
