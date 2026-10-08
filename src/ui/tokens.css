@@ -1,0 +1,30 @@
+/*
+ * Design tokens. Unity UI Toolkit (USS) supports the same `--var` / `var()` syntax,
+ * so this block can be copied into a USS file almost verbatim.
+ */
+:root {
+  --ga-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ga-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --ga-color-bg: #02030a;
+  --ga-color-panel: rgba(10, 18, 34, 0.78);
+  --ga-color-panel-strong: rgba(14, 26, 48, 0.92);
+  --ga-color-border: rgba(127, 212, 255, 0.22);
+  --ga-color-border-strong: rgba(127, 212, 255, 0.6);
+  --ga-color-text: #e6eef8;
+  --ga-color-text-dim: #8fa3bb;
+  --ga-color-accent: #7fd4ff;
+  --ga-color-positive: #7be3a5;
+  --ga-color-negative: #ff7a7a;
+  --ga-color-gold: #ffd27f;
+
+  --ga-space-1: 4px;
+  --ga-space-2: 8px;
+  --ga-space-3: 12px;
+  --ga-space-4: 16px;
+
+  --ga-radius: 6px;
+  --ga-font-size-s: 11px;
+  --ga-font-size-m: 13px;
+  --ga-font-size-l: 16px;
+}

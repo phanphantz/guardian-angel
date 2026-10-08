@@ -1,0 +1,86 @@
+[
+  {
+    "id": "core",
+    "name": "Command Core",
+    "description": "Heart of the station. Cannot be removed.",
+    "shape": "cylinder",
+    "color": "#c9d4e5",
+    "cost": 0,
+    "power": 10,
+    "crew": 4,
+    "storage": 100,
+    "buildable": false
+  },
+  {
+    "id": "hab",
+    "name": "Habitat Module",
+    "description": "Living quarters for crew.",
+    "shape": "cylinder",
+    "color": "#e6e1d3",
+    "cost": 400,
+    "power": -4,
+    "crew": 6,
+    "storage": 0,
+    "buildable": true
+  },
+  {
+    "id": "solar",
+    "name": "Solar Array",
+    "description": "Cheap, steady power.",
+    "shape": "panel",
+    "color": "#2b4c7e",
+    "cost": 250,
+    "power": 8,
+    "crew": 0,
+    "storage": 0,
+    "buildable": true
+  },
+  {
+    "id": "reactor",
+    "name": "Fusion Reactor",
+    "description": "Large power output. Expensive.",
+    "shape": "sphere",
+    "color": "#ffb347",
+    "cost": 1200,
+    "power": 40,
+    "crew": 0,
+    "storage": 0,
+    "buildable": true
+  },
+  {
+    "id": "cargo",
+    "name": "Cargo Bay",
+    "description": "Stores materials and supplies.",
+    "shape": "box",
+    "color": "#8a8f98",
+    "cost": 300,
+    "power": -1,
+    "crew": 0,
+    "storage": 500,
+    "buildable": true
+  },
+  {
+    "id": "lab",
+    "name": "Research Lab",
+    "description": "Unlocks new technology.",
+    "shape": "box",
+    "color": "#9be7c4",
+    "cost": 800,
+    "power": -6,
+    "crew": 2,
+    "storage": 0,
+    "buildable": true
+  },
+  {
+    "id": "shield",
+    "name": "Guardian Shield Emitter",
+    "description": "Projects a protective field over the station.",
+    "shape": "sphere",
+    "color": "#7fd4ff",
+    "cost": 1500,
+    "power": -15,
+    "crew": 0,
+    "storage": 0,
+    "buildable": true
+  }
+]
