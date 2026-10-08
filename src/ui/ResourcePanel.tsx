@@ -201,32 +201,34 @@ function BudgetGauge({
         onFocus={() => setShowFlows(true)}
         onBlur={() => setShowFlows(false)}
       >
-        {(
-          [
-            { kind: 'consumer', label: 'Out', value: s.usagePerHour, flowing: store.stock > 0 && s.usagePerHour > 0 },
-            { kind: 'producer', label: 'In', value: s.productionPerHour, flowing: s.productionPerHour > 0 },
-          ] as const
-        ).map((row) => (
-          <div key={row.kind} className="flow__row">
-            <span className="flow__label">{row.label}</span>
-            <span className="flow__track">
-              <span
-                className={`flow__fill flow__fill--${row.kind === 'consumer' ? 'out' : 'in'}${row.flowing ? ' is-flowing' : ''}`}
-                style={{ width: `${(row.value / flowScale) * 100}%`, ...motion }}
-              />
-            </span>
-            <span className="flow__value">{fmt(row.value)}/h</span>
-          </div>
-        ))}
+        <div className="flow__bars">
+          {(
+            [
+              { kind: 'consumer', label: 'Out', value: s.usagePerHour, flowing: store.stock > 0 && s.usagePerHour > 0 },
+              { kind: 'producer', label: 'In', value: s.productionPerHour, flowing: s.productionPerHour > 0 },
+            ] as const
+          ).map((row) => (
+            <div key={row.kind} className="flow__row">
+              <span className="flow__label">{row.label}</span>
+              <span className="flow__track">
+                <span
+                  className={`flow__fill flow__fill--${row.kind === 'consumer' ? 'out' : 'in'}${row.flowing ? ' is-flowing' : ''}`}
+                  style={{ width: `${(row.value / flowScale) * 100}%`, ...motion }}
+                />
+              </span>
+            </div>
+          ))}
+        </div>
+        {/* Net replaces the per-row rates; exact OUT / IN rates live in the hover breakdown. */}
+        {level === 'depleted' && net < 0 ? (
+          <span className="flow__net negative">Unmet {formatNet(-net).slice(1)}</span>
+        ) : (
+          <span className={`flow__net ${net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}`}>{formatNet(net)}</span>
+        )}
         {showFlows && <FlowBreakdown flows={flows} scale={flowScale} />}
       </div>
 
       <div className="gauge__footer">
-        {level === 'depleted' && net < 0 ? (
-          <span className="negative">Unmet {formatNet(-net).slice(1)}</span>
-        ) : (
-          <span className={net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}>{formatNet(net)} net</span>
-        )}
         <Eta level={level} draining={draining} filling={filling} hoursLeft={hoursLeft} hoursToFull={(store.capacity - store.stock) / net} atCapacity={store.stock >= store.capacity && net > 0} />
       </div>
     </div>

@@ -250,7 +250,7 @@ button {
 
 .gauge__footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   font-size: var(--ga-font-size-s);
 }
 
@@ -372,8 +372,20 @@ button {
 .flow {
   position: relative;
   display: flex;
+  align-items: center;
+  gap: var(--ga-space-3);
+}
+
+.flow__bars {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+.flow__net {
+  width: 92px;
+  text-align: right;
 }
 
 .flow__row {
@@ -423,11 +435,6 @@ button {
   animation-name: charge-flow;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-}
-
-.flow__value {
-  width: 64px;
-  text-align: right;
 }
 
 .flow {
