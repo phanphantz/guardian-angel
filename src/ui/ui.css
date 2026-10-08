@@ -209,6 +209,7 @@ button {
 /* ---------- Resources ---------- */
 .resource-panel {
   align-self: center;
+  border: none;
 }
 
 .resource-panel__row {
