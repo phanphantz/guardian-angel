@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore, type ResourceSummary } from '../core/resources'
 import { computeFlows } from '../core/sim'
-import { formatClock, formatHours } from '../core/time'
+import { formatHours, formatHoursLong } from '../core/time'
 import { SIM_CONFIG, useGameStore, type ResourceTab } from '../state/gameStore'
 
 /** Resource colors are the only non-terminal hues in the HUD besides alerts. */
@@ -222,7 +222,7 @@ function BudgetGauge({
           <span className={net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}>{formatNet(net)}</span>
         )}
         <span className="gauge__eta">
-          {level === 'depleted' ? 'Out of stock' : emptyAt !== undefined ? `Empty at ${formatClock(emptyAt)}` : 'Lasts 7d+'}
+          {level === 'depleted' ? 'Out of stock' : emptyAt !== undefined ? `Empty in ${formatHoursLong(hoursLeft)}` : 'Lasts 7+ days'}
         </span>
       </div>
     </div>

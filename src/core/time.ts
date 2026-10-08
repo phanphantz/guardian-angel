@@ -34,3 +34,10 @@ export function formatHours(hours: number): string {
   if (hours >= 48) return `${(hours / 24).toFixed(1)}d`
   return `${hours.toFixed(hours < 10 ? 1 : 0)}h`
 }
+
+/** "5.8 hours", "21 hours", "2.6 days". */
+export function formatHoursLong(hours: number): string {
+  if (hours >= 48) return `${(hours / 24).toFixed(1)} days`
+  const value = hours < 10 ? hours.toFixed(1) : Math.round(hours).toString()
+  return `${value} ${value === '1' || value === '1.0' ? 'hour' : 'hours'}`
+}
