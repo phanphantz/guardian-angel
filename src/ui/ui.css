@@ -499,7 +499,7 @@ button {
   gap: 5px;
   padding: var(--ga-space-2);
   background: #000;
-  border: 1px solid var(--ga-green);
+  border: 1px solid var(--res-color, var(--ga-green));
   box-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
   font-size: var(--ga-font-size-s);
   pointer-events: none;
@@ -513,7 +513,7 @@ button {
   height: 10px;
   margin-left: -5px;
   background: #000;
-  border: 1px solid var(--ga-green);
+  border: 1px solid var(--res-color, var(--ga-green));
   transform: rotate(45deg);
 }
 
