@@ -435,7 +435,7 @@ button {
 .flow__track {
   flex: 1;
   height: 4px;
-  border: 1px solid var(--ga-green-dim);
+  background: var(--ga-green-faint);
   overflow: hidden;
 }
 
@@ -496,6 +496,30 @@ button {
   pointer-events: none;
 }
 
+/* ^ pointing at the IN/OUT meter (v when the tooltip sits above it). */
+.ratio-tooltip__caret {
+  position: absolute;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: #000;
+  border: 1px solid var(--ga-green);
+  transform: rotate(45deg);
+}
+
+.ratio-tooltip--below .ratio-tooltip__caret {
+  top: -6px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.ratio-tooltip--above .ratio-tooltip__caret {
+  bottom: -6px;
+  border-left: none;
+  border-top: none;
+}
+
 .ratio-section {
   display: flex;
   flex-direction: column;
@@ -520,9 +544,9 @@ button {
 
 .ratio-bar {
   display: flex;
-  height: 12px;
+  height: 10px;
   gap: 1px;
-  border: 1px solid var(--ga-green-dim);
+  background: var(--ga-green-faint);
   overflow: hidden;
 }
 

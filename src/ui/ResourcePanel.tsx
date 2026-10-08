@@ -75,10 +75,11 @@ function FlowBreakdown({ flows, scale, anchor }: { flows: Flow[]; scale: number;
   // Rendered into <body> so the panel's scroll area can't crop it; flips above near the bottom.
   const below = anchor.bottom < window.innerHeight * 0.65
   const position = below
-    ? { left: anchor.left, width: anchor.width, top: anchor.bottom + 6 }
-    : { left: anchor.left, width: anchor.width, bottom: window.innerHeight - anchor.top + 6 }
+    ? { left: anchor.left, width: anchor.width, top: anchor.bottom + 9 }
+    : { left: anchor.left, width: anchor.width, bottom: window.innerHeight - anchor.top + 9 }
   return createPortal(
-    <div className="ratio-tooltip" role="tooltip" style={position}>
+    <div className={`ratio-tooltip ratio-tooltip--${below ? 'below' : 'above'}`} role="tooltip" style={position}>
+      <span className="ratio-tooltip__caret" aria-hidden />
       {(['producer', 'consumer'] as const).map((kind) => {
         const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
         const total = items.reduce((sum, f) => sum + f.perHour, 0)

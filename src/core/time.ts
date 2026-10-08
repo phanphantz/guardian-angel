@@ -29,8 +29,10 @@ export function formatDuration(minutes: number): string {
   return d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+/** Whole units, floored: "2d", "32h", "5h"; under an hour is "<1h". */
 export function formatHours(hours: number): string {
   if (!Number.isFinite(hours)) return '∞'
-  if (hours >= 48) return `${(hours / 24).toFixed(1)}d`
-  return `${hours.toFixed(hours < 10 ? 1 : 0)}h`
+  if (hours >= 48) return `${Math.floor(hours / 24)}d`
+  if (hours < 1) return '<1h'
+  return `${Math.floor(hours)}h`
 }
