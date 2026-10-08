@@ -5,11 +5,11 @@ import { useGameStore } from '../state/gameStore'
 import { Avatar } from './Avatar'
 import { EcgTrace, Soundwave, Sparkline } from './Charts'
 
-const VITAL_ROWS: { key: VitalKey; icon: string; label: string; format: (v: number) => string }[] = [
-  { key: 'hr', icon: '🫀', label: 'HR', format: (v) => `${Math.round(v)} bpm` },
-  { key: 'spo2', icon: '🫁', label: 'O₂', format: (v) => `${Math.round(v)}%` },
-  { key: 'temp', icon: '🌡️', label: 'Temp', format: (v) => `${v.toFixed(1)}°C` },
-  { key: 'co2', icon: '🧠', label: 'CO₂', format: (v) => `${Math.round(v).toLocaleString()} ppm` },
+const VITAL_ROWS: { key: VitalKey; label: string; format: (v: number) => string }[] = [
+  { key: 'hr', label: 'HR', format: (v) => `${Math.round(v)} BPM` },
+  { key: 'spo2', label: 'SPO₂', format: (v) => `${Math.round(v)}%` },
+  { key: 'temp', label: 'TEMP', format: (v) => `${v.toFixed(1)}°C` },
+  { key: 'co2', label: 'CO₂', format: (v) => `${Math.round(v).toLocaleString()} PPM` },
 ]
 
 export function CrewGrid() {
@@ -34,27 +34,25 @@ function CrewSlot({ crew, sim }: { crew: CrewState; sim: SimState }) {
   return (
     <article
       className={`panel crew-slot${speaking ? ' is-speaking' : ''}${crew.alive ? '' : ' is-dead'}${open ? ' is-open' : ''}`}
-      style={{ '--crew-color': crew.color } as React.CSSProperties}
       onClick={() => toggleCrew(crew.id)}
     >
       <header className="crew-slot__header">
-        <Avatar expression={face} skin={crew.skin} hair={crew.hair} hairStyle={crew.hairStyle} suit={crew.color} size={56} />
+        <Avatar expression={face} hairStyle={crew.hairStyle} size={56} />
         <div className="crew-slot__identity">
           <span className="crew-slot__name">{crew.name}</span>
-          <span className="muted">
-            {crew.role} · {crew.location}
-          </span>
+          <span className="muted">{crew.role}</span>
+          <span className="muted crew-slot__location">Loc: {crew.location}</span>
           {crew.alive ? (
             <Soundwave active={speaking !== null} />
           ) : (
             <span className="crew-slot__deceased">Deceased · {formatClock(crew.diedAt!)}</span>
           )}
         </div>
-        {unread > 0 && <span className="badge" title="New messages">{unread}</span>}
+        {unread > 0 && <span className="badge" title="New messages">MSG {unread}</span>}
       </header>
 
-      <div className={`crew-slot__line${speaking ? ' is-speaking' : ''}`}>
-        {speaking ?? (crew.messages.at(-1) ? `“${crew.messages.at(-1)!.text}”` : '')}
+      <div className={`crew-slot__line${speaking ? ' is-speaking' : crew.messages.length ? '' : ' crew-slot__line--idle'}`}>
+        {speaking ?? (crew.messages.at(-1) ? `“${crew.messages.at(-1)!.text}”` : '— No transmission —')}
       </div>
 
       <div className="vitals">
@@ -82,9 +80,6 @@ function VitalRow({
   const status = alive ? vitalStatus(row.key, value) : 'critical'
   return (
     <div className={`vital vital--${status}`}>
-      <span className="vital__icon" aria-hidden>
-        {row.icon}
-      </span>
       <span className="vital__label">{row.label}</span>
       <span className="vital__value">{alive || row.key === 'co2' ? row.format(value) : '—'}</span>
       {row.key === 'hr' ? (

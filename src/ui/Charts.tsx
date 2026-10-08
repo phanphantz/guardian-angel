@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react'
 import type { VitalStatus } from '../core/vitals'
 
 const STATUS_COLOR: Record<VitalStatus, string> = {
-  normal: '#7be3a5',
-  warning: '#ffd27f',
-  critical: '#ff7a7a',
+  normal: '#39ff6a',
+  warning: '#ffb000',
+  critical: '#ff3b30',
 }
 
 /** Trend line of the last 24 game hours. */
@@ -42,7 +42,7 @@ export function EcgTrace({ hr, status, width = 96, height = 22 }: { hr: number; 
   const colorRef = useRef(STATUS_COLOR[status])
   useEffect(() => {
     hrRef.current = hr
-    colorRef.current = hr > 0 ? STATUS_COLOR[status] : '#5a6577'
+    colorRef.current = hr > 0 ? STATUS_COLOR[status] : '#127a2f'
   }, [hr, status])
 
   useEffect(() => {

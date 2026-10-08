@@ -3,9 +3,9 @@ import { SKIPS, formatClock, type Speed } from '../core/time'
 import { SIM_CONFIG, useGameStore } from '../state/gameStore'
 
 const SPEEDS: { id: Speed; label: string; title: string }[] = [
-  { id: 'paused', label: '❚❚', title: 'Pause' },
-  { id: 'normal', label: '▶', title: 'Normal speed (1 min/s)' },
-  { id: 'fast', label: '▶▶ ×10', title: 'Fast forward (10 min/s)' },
+  { id: 'paused', label: 'Hold', title: 'Pause' },
+  { id: 'normal', label: '1×', title: 'Normal speed (1 min/s)' },
+  { id: 'fast', label: '10×', title: 'Fast forward (10 min/s)' },
 ]
 
 export function TimeBar() {

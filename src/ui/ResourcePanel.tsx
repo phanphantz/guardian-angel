@@ -4,15 +4,16 @@ import { computeFlows } from '../core/sim'
 import { formatClock, formatHours } from '../core/time'
 import { SIM_CONFIG, useGameStore, type ResourceTab } from '../state/gameStore'
 
-const RESOURCES: Record<ResourceId, { label: string; icon: string; color: string }> = {
-  energy: { label: 'Energy', icon: '⚡', color: '#ffd27f' },
-  water: { label: 'Water', icon: '💧', color: '#7fd4ff' },
-  food: { label: 'Food', icon: '🍲', color: '#7be3a5' },
-  materials: { label: 'Materials', icon: '🔩', color: '#d0a77c' },
+/** Resource colors are the only non-terminal hues in the HUD besides alerts. */
+const RESOURCES: Record<ResourceId, { label: string; code: string; color: string }> = {
+  energy: { label: 'Energy', code: 'PWR', color: '#ffd27f' },
+  water: { label: 'Water', code: 'H₂O', color: '#7fd4ff' },
+  food: { label: 'Food', code: 'NUT', color: '#b6f29a' },
+  materials: { label: 'Materials', code: 'MAT', color: '#d0a77c' },
 }
 
 /** Categorical colors for producer / consumer segments, assigned by position. */
-const SEGMENT_COLORS = ['#7fd4ff', '#b79cff', '#ff9f7f', '#7be3a5', '#ffd27f', '#ff7a9a']
+const SEGMENT_COLORS = ['#39ff6a', '#22b84a', '#127a2f', '#8dffab', '#1f6b35', '#5cff8a']
 
 const TABS: { id: ResourceTab; label: string }[] = [
   { id: 'production', label: 'Production' },
@@ -69,8 +70,8 @@ function ProductionGauge({ id, store, flows }: { id: ResourceId; store: Resource
   return (
     <div className="gauge">
       <div className="gauge__header">
-        <span className="gauge__title">
-          {meta.icon} {meta.label}
+        <span className="gauge__title" style={{ color: meta.color }}>
+          <span className="gauge__code">{meta.code}</span> {meta.label}
         </span>
         <span className="gauge__value">{fmt(s.productionPerHour)}/h</span>
       </div>
@@ -111,7 +112,7 @@ function formatNet(perHour: number): string {
   return `${perHour > 0 ? '+' : perHour < 0 ? '−' : '±'}${text}/h`
 }
 
-const USAGE_COLOR = '#ff5c5c'
+const USAGE_COLOR = '#ff3b30'
 
 /** Floating breakdown of per-hour usage by consumer, shown below the bar. */
 function UsageBreakdown({ flows, summary }: { flows: Flow[]; summary: ResourceSummary }) {
@@ -180,8 +181,8 @@ function BudgetGauge({
   return (
     <div className={`gauge gauge--${level}`}>
       <div className="gauge__header">
-        <span className="gauge__title">
-          {meta.icon} {meta.label}
+        <span className="gauge__title" style={{ color: meta.color }}>
+          <span className="gauge__code">{meta.code}</span> {meta.label}
         </span>
         <span className="gauge__value">
           {whole(store.stock)} / {whole(store.capacity)}

@@ -26,6 +26,7 @@ export default function App() {
   return (
     <div className="app">
       <SpaceScene />
+      <div className="scene-dim" />
       <div className="hud">
         <TimeBar />
         <div className="hud__body">
@@ -35,6 +36,7 @@ export default function App() {
       </div>
       <Notice />
       <GameOver />
+      <div className="crt" aria-hidden />
     </div>
   )
 }
