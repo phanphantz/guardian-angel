@@ -60,9 +60,12 @@ appears and the run restarts with the next seed.
   sudden drops, and a runway badge (time until empty, ∞ when not depleting). Below it an
   IN/OUT meter with the net rate; hover it for macOS-storage-style ratios of every source.
   GEN ON/OFF in the top bar switches on test generators. All rates are per hour.
-- **Crew slot:** name, role, location, a procedural face with 5 expressions, vitals with an
-  ECG trace and 24h trends, a speaking waveform with the latest line, and an unread
-  badge. Click a slot for its message log.
+- **Layout:** time bar on top, the four resources as a strip just below it (top-centre),
+  six crew slots along the bottom.
+- **Crew slot:** name, role, location, a procedural face with 5 expressions, a speaking
+  waveform with the latest line, and an unread badge. The border turns amber or red when
+  any vital is out of range. Hover for vitals (ECG trace + 24h trends); click for the
+  message log.
 - **Tuning:** every rate, threshold and damage weight lives in `src/data/scenario.json`.
   `npm test` checks the pacing (order of depletion, staggered deaths).
 

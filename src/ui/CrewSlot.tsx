@@ -1,6 +1,8 @@
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { CrewState, SimState } from '../core/sim'
 import { formatClock } from '../core/time'
-import { expression, vitalStatus, vitals, type VitalKey, type Vitals } from '../core/vitals'
+import { expression, vitalStatus, vitals, type VitalKey, type VitalStatus, type Vitals } from '../core/vitals'
 import { useGameStore } from '../state/gameStore'
 import { Avatar } from './Avatar'
 import { EcgTrace, Soundwave, Sparkline } from './Charts'
@@ -12,10 +14,13 @@ const VITAL_ROWS: { key: VitalKey; label: string; format: (v: number) => string 
   { key: 'co2', label: 'CO₂', format: (v) => `${Math.round(v).toLocaleString()} PPM` },
 ]
 
-export function CrewGrid() {
+const TOOLTIP_WIDTH = 288
+
+/** Bottom-of-screen strip of crew slots. */
+export function CrewStrip() {
   const sim = useGameStore((s) => s.sim)
   return (
-    <section className="crew-grid">
+    <section className="crew-strip">
       {sim.crew.map((c) => (
         <CrewSlot key={c.id} crew={c} sim={sim} />
       ))}
@@ -23,46 +28,74 @@ export function CrewGrid() {
   )
 }
 
+/** Worst status across all vitals, so the slot can flag trouble while vitals are hidden. */
+function worstStatus(v: Vitals): VitalStatus {
+  const statuses = VITAL_ROWS.map((r) => vitalStatus(r.key, v[r.key]))
+  return statuses.includes('critical') ? 'critical' : statuses.includes('warning') ? 'warning' : 'normal'
+}
+
 function CrewSlot({ crew, sim }: { crew: CrewState; sim: SimState }) {
   const speaking = useGameStore((s) => (s.speaking?.crewId === crew.id ? s.speaking.text : null))
   const unread = useGameStore((s) => s.unread[crew.id] ?? 0)
   const open = useGameStore((s) => s.openCrewId === crew.id)
   const toggleCrew = useGameStore((s) => s.toggleCrew)
+  /** Viewport rect of the slot while its vitals tooltip is shown. */
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const v = vitals(crew, sim.cabin)
   const face = expression(crew, v)
+  const status = crew.alive ? worstStatus(v) : 'normal'
 
   return (
     <article
-      className={`panel crew-slot${speaking ? ' is-speaking' : ''}${crew.alive ? '' : ' is-dead'}${open ? ' is-open' : ''}`}
+      className={`panel crew-slot crew-slot--${status}${speaking ? ' is-speaking' : ''}${crew.alive ? '' : ' is-dead'}${open ? ' is-open' : ''}`}
       onClick={() => toggleCrew(crew.id)}
+      onMouseEnter={(e) => setAnchor(e.currentTarget.getBoundingClientRect())}
+      onMouseLeave={() => setAnchor(null)}
     >
       <header className="crew-slot__header">
-        <Avatar expression={face} hairStyle={crew.hairStyle} size={56} />
+        <Avatar expression={face} hairStyle={crew.hairStyle} size={44} />
         <div className="crew-slot__identity">
           <span className="crew-slot__name">{crew.name}</span>
           <span className="muted">{crew.role}</span>
           <span className="muted crew-slot__location">Loc: {crew.location}</span>
-          {crew.alive ? (
-            <Soundwave active={speaking !== null} />
-          ) : (
-            <span className="crew-slot__deceased">Deceased · {formatClock(crew.diedAt!)}</span>
-          )}
         </div>
-        {unread > 0 && <span className="badge" title="New messages">MSG {unread}</span>}
       </header>
+
+      <div className="crew-slot__status">
+        {crew.alive ? (
+          <Soundwave active={speaking !== null} />
+        ) : (
+          <span className="crew-slot__deceased">Deceased · {formatClock(crew.diedAt!)}</span>
+        )}
+        {unread > 0 && <span className="badge" title="New messages">MSG {unread}</span>}
+      </div>
 
       <div className={`crew-slot__line${speaking ? ' is-speaking' : crew.messages.length ? '' : ' crew-slot__line--idle'}`}>
         {speaking ?? (crew.messages.at(-1) ? `“${crew.messages.at(-1)!.text}”` : '— No transmission —')}
       </div>
 
+      {open && <MessageLog crew={crew} />}
+      {anchor && !open && <VitalsTooltip crew={crew} vitals={v} anchor={anchor} />}
+    </article>
+  )
+}
+
+/** Vitals float above the hovered slot, rendered into <body> so nothing crops them. */
+function VitalsTooltip({ crew, vitals: v, anchor }: { crew: CrewState; vitals: Vitals; anchor: DOMRect }) {
+  const left = Math.min(Math.max(8, anchor.left + anchor.width / 2 - TOOLTIP_WIDTH / 2), window.innerWidth - TOOLTIP_WIDTH - 8)
+  return createPortal(
+    <div className="vitals-tooltip" role="tooltip" style={{ left, width: TOOLTIP_WIDTH, bottom: window.innerHeight - anchor.top + 6 }}>
+      <div className="vitals-tooltip__title">
+        <span>Vitals · {crew.name}</span>
+        {!crew.alive && <span className="negative">Flatline</span>}
+      </div>
       <div className="vitals">
         {VITAL_ROWS.map((row) => (
           <VitalRow key={row.key} row={row} value={v[row.key]} history={crew.history} alive={crew.alive} />
         ))}
       </div>
-
-      {open && <MessageLog crew={crew} />}
-    </article>
+    </div>,
+    document.body,
   )
 }
 

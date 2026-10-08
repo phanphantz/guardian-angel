@@ -24,8 +24,7 @@ export function ResourcePanel() {
 
   return (
     <section className="panel resource-panel">
-      <div className="panel__header">Resources</div>
-      <div className="panel__body">
+      <div className="resource-panel__row">
         {RESOURCE_IDS.map((id) => (
           <BudgetGauge
             key={id}

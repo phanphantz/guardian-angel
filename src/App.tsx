@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { SpaceScene } from './render/SpaceScene'
 import { useGameStore } from './state/gameStore'
-import { CrewGrid } from './ui/CrewSlot'
+import { CrewStrip } from './ui/CrewSlot'
 import { GameOver } from './ui/GameOver'
 import { ResourcePanel } from './ui/ResourcePanel'
 import { Notice, TimeBar } from './ui/TimeBar'
@@ -29,10 +29,9 @@ export default function App() {
       <div className="scene-dim" />
       <div className="hud">
         <TimeBar />
-        <div className="hud__body">
-          <ResourcePanel />
-          <CrewGrid />
-        </div>
+        <ResourcePanel />
+        <div className="hud__spacer" />
+        <CrewStrip />
       </div>
       <Notice />
       <GameOver />
