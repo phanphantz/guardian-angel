@@ -71,14 +71,14 @@ const RATIO_COLORS: Record<Flow['kind'], string[]> = {
  * Hover breakdown of IN and OUT together, macOS-storage style. Both ratio bars share the
  * flow meter's scale (the larger of the two rates), so their lengths compare directly.
  */
-function FlowBreakdown({ flows, scale, anchor, color }: { flows: Flow[]; scale: number; anchor: DOMRect; color: string }) {
+function FlowBreakdown({ flows, scale, anchor }: { flows: Flow[]; scale: number; anchor: DOMRect }) {
   // Rendered into <body> so the panel's scroll area can't crop it; flips above near the bottom.
   const below = anchor.bottom < window.innerHeight * 0.65
   const position = below
     ? { left: anchor.left, width: anchor.width, top: anchor.bottom + 9 }
     : { left: anchor.left, width: anchor.width, bottom: window.innerHeight - anchor.top + 9 }
   return createPortal(
-    <div className={`ratio-tooltip ratio-tooltip--${below ? 'below' : 'above'}`} role="tooltip" style={{ ...position, ...({ '--res-color': color } as React.CSSProperties) }}>
+    <div className={`ratio-tooltip ratio-tooltip--${below ? 'below' : 'above'}`} role="tooltip" style={position}>
       <span className="ratio-tooltip__caret" aria-hidden />
       {(['producer', 'consumer'] as const).map((kind) => {
         const items = flows.filter((f) => f.kind === kind && f.perHour > 0).sort((a, b) => b.perHour - a.perHour)
@@ -245,7 +245,7 @@ function BudgetGauge({
         ) : (
           <span className={`flow__net ${net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}`}>{formatNet(net)}</span>
         )}
-        {anchor && <FlowBreakdown flows={flows} scale={flowScale} anchor={anchor} color={meta.color} />}
+        {anchor && <FlowBreakdown flows={flows} scale={flowScale} anchor={anchor} />}
       </div>
 
     </div>

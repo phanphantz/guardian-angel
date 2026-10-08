@@ -496,10 +496,7 @@ button {
   text-shadow: 0 0 6px var(--ga-green-glow);
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: var(--ga-space-2);
   background: #000;
-  border: 1px solid var(--res-color, var(--ga-green));
   box-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
   font-size: var(--ga-font-size-s);
   pointer-events: none;
@@ -513,7 +510,7 @@ button {
   height: 10px;
   margin-left: -5px;
   background: #000;
-  border: 1px solid var(--res-color, var(--ga-green));
+  border: 1px solid var(--ga-green);
   transform: rotate(45deg);
 }
 
@@ -525,6 +522,7 @@ button {
 
 .ratio-tooltip--above .ratio-tooltip__caret {
   bottom: -6px;
+  border-color: var(--ga-color-negative);
   border-left: none;
   border-top: none;
 }
@@ -533,11 +531,17 @@ button {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  padding: var(--ga-space-2);
+}
+
+/* Split frame: production on top in green, usage below in red. */
+.ratio-section--producer {
+  border: 1px solid var(--ga-green);
+  border-bottom: none;
 }
 
 .ratio-section--consumer {
-  padding-top: 6px;
-  border-top: 1px dashed var(--ga-green-dim);
+  border: 1px solid var(--ga-color-negative);
   color: var(--ga-color-negative);
   text-shadow: 0 0 6px rgba(255, 59, 48, 0.45);
 }
