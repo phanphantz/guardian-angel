@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import crew from '../data/crew.json'
 import dialogue from '../data/dialogue.json'
 import scenario from '../data/scenario.json'
-import { advance, computeFlows, createSim, forecastDepletion, type SimConfig, type SimEvent } from './sim'
+import { advance, computeFlows, createSim, forecastDepletion, setFlowsEnabled, type SimConfig, type SimEvent } from './sim'
 import { summarize } from './resources'
 
 const config = { scenario, crew, dialogue } as unknown as SimConfig
@@ -86,5 +86,21 @@ describe('forecastDepletion', () => {
     }
     const linear = summarize('energy', sim.resources.energy, computeFlows(sim, config)).hoursLeft
     expect((forecast.energy! - sim.minute) / 60).toBeLessThan(linear - 12)
+  })
+})
+
+describe('generators', () => {
+  it('start switched off and can be toggled', () => {
+    const sim = createSim(config, 1)
+    expect(computeFlows(sim, config).filter((f) => f.kind === 'producer')).toHaveLength(0)
+
+    const ids = config.scenario.producers.map((p) => p.id)
+    const on = setFlowsEnabled(sim, ids, true)
+    const producers = computeFlows(on, config).filter((f) => f.kind === 'producer')
+    expect(producers.map((p) => p.resource).sort()).toEqual(['energy', 'food', 'materials', 'water'])
+
+    const later = advance(on, config, 60).state
+    expect(later.resources.energy.stock).toBeGreaterThan(on.resources.energy.stock)
+    expect(computeFlows(setFlowsEnabled(on, ids, false), config).filter((f) => f.kind === 'producer')).toHaveLength(0)
   })
 })

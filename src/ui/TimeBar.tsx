@@ -15,6 +15,8 @@ export function TimeBar() {
   const speed = useGameStore((s) => s.speed)
   const setSpeed = useGameStore((s) => s.setSpeed)
   const skip = useGameStore((s) => s.skip)
+  const generatorsOn = useGameStore((s) => s.generatorsOn)
+  const toggleGenerators = useGameStore((s) => s.toggleGenerators)
 
   return (
     <header className="panel topbar">
@@ -25,6 +27,17 @@ export function TimeBar() {
         </span>
       </div>
       <div className="topbar__spacer" />
+      <div className="segmented" role="group" aria-label="Generators">
+        <button
+          className={generatorsOn ? 'is-active' : ''}
+          aria-pressed={generatorsOn}
+          title="Switch every resource generator on or off (prototype test control)"
+          disabled={over}
+          onClick={toggleGenerators}
+        >
+          Gen {generatorsOn ? 'On' : 'Off'}
+        </button>
+      </div>
       <span className="clock">{formatClock(minute)}</span>
       <div className="segmented" role="group" aria-label="Time speed">
         {SPEEDS.map((s) => (

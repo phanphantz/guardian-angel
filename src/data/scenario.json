@@ -22,7 +22,40 @@
       "capacity": 500
     }
   },
-  "producers": [],
+  "producers": [
+    {
+      "id": "fusionGenerator",
+      "label": "Fusion Generator",
+      "resource": "energy",
+      "perHour": 24,
+      "scale": "fixed",
+      "enabled": false
+    },
+    {
+      "id": "waterReclaimer",
+      "label": "Water Reclaimer",
+      "resource": "water",
+      "perHour": 2.4,
+      "scale": "fixed",
+      "enabled": false
+    },
+    {
+      "id": "hydroponics",
+      "label": "Hydroponics Bay",
+      "resource": "food",
+      "perHour": 1.4,
+      "scale": "fixed",
+      "enabled": false
+    },
+    {
+      "id": "fabricator",
+      "label": "Fabricator",
+      "resource": "materials",
+      "perHour": 6,
+      "scale": "fixed",
+      "enabled": false
+    }
+  ],
   "consumers": [
     {
       "id": "lifeSupport",

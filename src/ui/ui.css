@@ -385,7 +385,8 @@ button {
 
 .stock-bar__fill,
 .stock-bar__ghost,
-.stock-bar__drain {
+.stock-bar__drain,
+.stock-bar__charge {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -418,7 +419,8 @@ button {
    the ghost only animates when it shrinks away (after is-dropping clears). */
 .stock-bar.is-dropping .stock-bar__fill,
 .stock-bar.is-dropping .stock-bar__ghost,
-.stock-bar.is-dropping .stock-bar__drain {
+.stock-bar.is-dropping .stock-bar__drain,
+.stock-bar.is-dropping .stock-bar__charge {
   transition: none;
 }
 
@@ -428,6 +430,27 @@ button {
   }
   to {
     background-position: -6px 0;
+  }
+}
+
+/* Green stripes pushing the edge outward while net production is positive. */
+.stock-bar__charge {
+  width: 18px;
+  transition: left 1s linear;
+  background: repeating-linear-gradient(90deg, var(--ga-green) 0 3px, transparent 3px 6px);
+  background-size: 6px 100%;
+  animation-name: charge-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0.85;
+}
+
+@keyframes charge-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 6px 0;
   }
 }
 
@@ -484,6 +507,14 @@ button {
 
 .flow__fill--in {
   background: var(--ga-green);
+}
+
+.flow__fill--in.is-flowing {
+  background: repeating-linear-gradient(90deg, var(--ga-green) 0 4px, rgba(57, 255, 106, 0.55) 4px 8px);
+  background-size: 8px 100%;
+  animation-name: charge-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
 .flow__value {

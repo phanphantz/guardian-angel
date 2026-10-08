@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import crew from '../data/crew.json'
 import dialogue from '../data/dialogue.json'
 import scenario from '../data/scenario.json'
-import { advance, createSim, forecastDepletion, type AdvanceResult, type Forecast, type SimConfig, type SimEvent, type SimState } from '../core/sim'
+import { advance, createSim, forecastDepletion, setFlowsEnabled, type AdvanceResult, type Forecast, type SimConfig, type SimEvent, type SimState } from '../core/sim'
 import { SPEED_RATE, type Speed } from '../core/time'
 
 /**
@@ -37,6 +37,9 @@ interface GameStore {
   /** performance.now() timestamp of the automatic restart, while the game-over screen is up. */
   restartAt: number | null
 
+  /** Dev toggle: all scenario producers on/off. Survives restarts. */
+  generatorsOn: boolean
+  toggleGenerators: () => void
   setSpeed: (speed: Speed) => void
   setResourceTab: (tab: ResourceTab) => void
   skip: (minutes: number) => void
@@ -49,6 +52,7 @@ interface GameStore {
 let minuteAccumulator = 0
 
 const hourOf = (sim: SimState) => Math.floor(sim.minute / 60)
+const GENERATOR_IDS = SIM_CONFIG.scenario.producers.map((p) => p.id)
 
 export const useGameStore = create<GameStore>((set, get) => {
   function apply(result: AdvanceResult, skipped: boolean) {
@@ -92,6 +96,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     openCrewId: null,
     restartAt: null,
 
+    generatorsOn: false,
+    toggleGenerators: () => {
+      const generatorsOn = !get().generatorsOn
+      const sim = setFlowsEnabled(get().sim, GENERATOR_IDS, generatorsOn)
+      set({ generatorsOn, sim, forecast: forecastDepletion(sim, SIM_CONFIG) })
+    },
+
     setSpeed: (speed) => set({ speed }),
     setResourceTab: (resourceTab) => set({ resourceTab }),
 
@@ -108,7 +119,7 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     restart: () => {
       minuteAccumulator = 0
-      const sim = createSim(SIM_CONFIG, get().sim.seed + 1)
+      const sim = setFlowsEnabled(createSim(SIM_CONFIG, get().sim.seed + 1), GENERATOR_IDS, get().generatorsOn)
       set({
         sim,
         forecast: forecastDepletion(sim, SIM_CONFIG),

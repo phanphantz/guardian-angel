@@ -96,6 +96,8 @@ export interface SimState {
   crew: CrewState[]
   /** One-shot triggers that already fired, e.g. "cold:mira". */
   fired: Record<string, true>
+  /** Producers / consumers currently switched off, by flow id. */
+  disabledFlows: Record<string, true>
   nextIdleMinute: number
   over: boolean
 }
@@ -128,6 +130,9 @@ export function createSim(config: SimConfig, seed: number): SimState {
     cabin: { o2: scenario.cabin.o2, co2: scenario.cabin.co2, temp: scenario.cabin.temp },
     crew: [],
     fired: {},
+    disabledFlows: Object.fromEntries(
+      [...scenario.producers, ...scenario.consumers].filter((f) => f.enabled === false).map((f) => [f.id, true as const]),
+    ),
     nextIdleMinute: 0,
     over: false,
   }
@@ -167,9 +172,19 @@ export function computeFlows(state: SimState, config: SimConfig): Flow[] {
     return { id: def.id, label: def.label, resource: def.resource, kind, perHour }
   }
   return [
-    ...scenario.producers.map((p) => resolve(p, 'producer')),
-    ...scenario.consumers.map((c) => resolve(c, 'consumer')),
+    ...scenario.producers.filter((p) => !state.disabledFlows[p.id]).map((p) => resolve(p, 'producer')),
+    ...scenario.consumers.filter((c) => !state.disabledFlows[c.id]).map((c) => resolve(c, 'consumer')),
   ]
+}
+
+/** Switch producers / consumers on or off. Returns a new state. */
+export function setFlowsEnabled(state: SimState, ids: string[], enabled: boolean): SimState {
+  const disabledFlows = { ...state.disabledFlows }
+  for (const id of ids) {
+    if (enabled) delete disabledFlows[id]
+    else disabledFlows[id] = true
+  }
+  return { ...state, disabledFlows }
 }
 
 // ---------- Tick ----------

@@ -192,9 +192,10 @@ function BudgetGauge({
   const net = s.productionPerHour - s.usagePerHour
   const pct = (v: number) => `${(v / store.capacity) * 100}%`
   const draining = store.stock > 0 && s.usagePerHour > s.productionPerHour
+  const filling = store.stock < store.capacity && s.productionPerHour > s.usagePerHour
   const flowScale = Math.max(s.usagePerHour, s.productionPerHour, 0.0001)
   const motion = {
-    animationDuration: `${drainPeriod(s.usagePerHour, store.capacity, speed)}s`,
+    animationDuration: `${drainPeriod(Math.abs(net), store.capacity, speed)}s`,
     animationPlayState: speed === 'paused' ? 'paused' : 'running',
   } as const
 
@@ -214,20 +215,24 @@ function BudgetGauge({
         <div className="stock-bar__fill" style={{ width: pct(store.stock), background: meta.color }} />
         <div className="stock-bar__ghost" style={{ left: pct(store.stock), width: pct(ghost) }} />
         {draining && <div className="stock-bar__drain" style={{ left: pct(store.stock), ...motion }} />}
+        {filling && <div className="stock-bar__charge" style={{ left: pct(store.stock), ...motion }} />}
       </div>
 
       <div className="flow" onMouseEnter={() => setShowUsage(true)} onMouseLeave={() => setShowUsage(false)} onFocus={() => setShowUsage(true)} onBlur={() => setShowUsage(false)} tabIndex={0}>
         <div className="flow__row">
           <span className="flow__label">Out</span>
           <span className="flow__track">
-            <span className={`flow__fill flow__fill--out${draining ? ' is-flowing' : ''}`} style={{ width: `${(s.usagePerHour / flowScale) * 100}%`, ...motion }} />
+            <span className={`flow__fill flow__fill--out${store.stock > 0 && s.usagePerHour > 0 ? ' is-flowing' : ''}`} style={{ width: `${(s.usagePerHour / flowScale) * 100}%`, ...motion }} />
           </span>
           <span className="flow__value">{fmt(s.usagePerHour)}/h</span>
         </div>
         <div className="flow__row">
           <span className="flow__label">In</span>
           <span className="flow__track">
-            <span className="flow__fill flow__fill--in" style={{ width: `${(s.productionPerHour / flowScale) * 100}%` }} />
+            <span
+              className={`flow__fill flow__fill--in${s.productionPerHour > 0 ? ' is-flowing' : ''}`}
+              style={{ width: `${(s.productionPerHour / flowScale) * 100}%`, ...motion }}
+            />
           </span>
           <span className="flow__value">{fmt(s.productionPerHour)}/h</span>
         </div>
