@@ -267,6 +267,77 @@ button {
   margin-left: auto;
 }
 
+.gauge__legend--single {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.gauge__runway {
+  margin-left: var(--ga-space-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gauge__footer {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--ga-font-mono);
+  font-size: var(--ga-font-size-s);
+}
+
+.gauge__eta {
+  color: var(--ga-color-text-dim);
+}
+
+.positive {
+  color: var(--ga-color-positive);
+}
+
+/* Urgency: < 24h amber, < 6h red + pulse, depleted grey. */
+.gauge--warning .gauge__runway,
+.gauge--warning .gauge__eta {
+  color: var(--ga-color-gold);
+}
+
+.gauge--warning .gauge__runway {
+  background: rgba(255, 210, 127, 0.14);
+}
+
+.gauge--critical .gauge__runway,
+.gauge--critical .gauge__eta {
+  color: var(--ga-color-negative);
+}
+
+.gauge--critical .gauge__runway {
+  background: rgba(255, 122, 122, 0.16);
+}
+
+.gauge--critical .gauge__segment--use,
+.gauge--critical .gauge__runway {
+  animation: urgent-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes urgent-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
+}
+
+.gauge--depleted .gauge__title,
+.gauge--depleted .gauge__value,
+.gauge--depleted .legend-item {
+  color: var(--ga-color-text-dim);
+}
+
+.gauge--depleted .gauge__runway {
+  color: var(--ga-color-text-dim);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 /* ---------- Crew ---------- */
 .crew-grid {
   display: flex;

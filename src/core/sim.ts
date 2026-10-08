@@ -290,6 +290,26 @@ export function advance(state: SimState, config: SimConfig, minutes: number, sto
   return { state: next, events }
 }
 
+export type Forecast = Partial<Record<ResourceId, number>>
+
+/**
+ * Minute at which each resource will hit zero, by running a copy of the sim forward.
+ * Unlike a linear "stock / rate" estimate this accounts for knock-on effects
+ * (degraded life support, crew deaths). Resources that last past the horizon are omitted.
+ */
+export function forecastDepletion(state: SimState, config: SimConfig, horizonMinutes = 7 * 1440): Forecast {
+  const sim = structuredClone(state)
+  const forecast: Forecast = {}
+  for (const id of RESOURCE_IDS) if (sim.resources[id].stock <= 0) forecast[id] = sim.minute
+  for (let i = 0; i < horizonMinutes && !sim.over && Object.keys(forecast).length < RESOURCE_IDS.length; i++) {
+    tick(sim, config)
+    for (const id of RESOURCE_IDS) {
+      if (forecast[id] === undefined && sim.resources[id].stock <= 0) forecast[id] = sim.minute
+    }
+  }
+  return forecast
+}
+
 // ---------- Helpers ----------
 
 const clamp100 = (v: number) => Math.min(100, Math.max(0, v))

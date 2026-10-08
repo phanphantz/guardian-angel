@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import crew from '../data/crew.json'
 import dialogue from '../data/dialogue.json'
 import scenario from '../data/scenario.json'
-import { advance, computeFlows, createSim, type SimConfig, type SimEvent } from './sim'
+import { advance, computeFlows, createSim, forecastDepletion, type SimConfig, type SimEvent } from './sim'
 import { summarize } from './resources'
 
 const config = { scenario, crew, dialogue } as unknown as SimConfig
@@ -73,5 +73,18 @@ describe('production', () => {
 
     const after = advance(sim, withSolar, 60).state
     expect(sim.resources.energy.stock - after.resources.energy.stock).toBeCloseTo(9, 5)
+  })
+})
+
+describe('forecastDepletion', () => {
+  it('matches when the run actually depletes each resource, unlike a linear estimate', () => {
+    const sim = createSim(config, 1)
+    const forecast = forecastDepletion(sim, config)
+    const { events } = advance(sim, config, 7 * 1440)
+    for (const e of events) {
+      if (e.type === 'depleted') expect(forecast[e.resource]).toBe(e.minute)
+    }
+    const linear = summarize('energy', sim.resources.energy, computeFlows(sim, config)).hoursLeft
+    expect((forecast.energy! - sim.minute) / 60).toBeLessThan(linear - 12)
   })
 })

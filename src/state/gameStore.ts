@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import crew from '../data/crew.json'
 import dialogue from '../data/dialogue.json'
 import scenario from '../data/scenario.json'
-import { advance, createSim, type AdvanceResult, type SimConfig, type SimEvent, type SimState } from '../core/sim'
+import { advance, createSim, forecastDepletion, type AdvanceResult, type Forecast, type SimConfig, type SimEvent, type SimState } from '../core/sim'
 import { SPEED_RATE, type Speed } from '../core/time'
 
 /**
@@ -25,6 +25,8 @@ const speechDuration = (text: string) => Math.min(5000, 1400 + text.length * 45)
 
 interface GameStore {
   sim: SimState
+  /** When each resource will actually run out. Refreshed once per game hour. */
+  forecast: Forecast
   speed: Speed
   resourceTab: ResourceTab
   notice: { text: string; id: number } | null
@@ -46,6 +48,8 @@ interface GameStore {
 
 let minuteAccumulator = 0
 
+const hourOf = (sim: SimState) => Math.floor(sim.minute / 60)
+
 export const useGameStore = create<GameStore>((set, get) => {
   function apply(result: AdvanceResult, skipped: boolean) {
     const { sim, speechQueue, unread, openCrewId } = get()
@@ -63,8 +67,11 @@ export const useGameStore = create<GameStore>((set, get) => {
     }
     if (skipped && result.stoppedBy) notice = `Skip stopped: ${describe(result.stoppedBy, result.state)}`
 
+    const { forecast } = get()
+    const stale = hourOf(result.state) !== hourOf(sim) || result.events.some((e) => e.type !== 'say')
     set({
       sim: result.state,
+      forecast: stale ? forecastDepletion(result.state, SIM_CONFIG) : forecast,
       speechQueue: queue.slice(-MAX_QUEUED_SPEECH),
       unread: nextUnread,
       ...(notice ? { notice: { text: notice, id: Date.now() } } : {}),
@@ -72,8 +79,10 @@ export const useGameStore = create<GameStore>((set, get) => {
     })
   }
 
+  const initial = createSim(SIM_CONFIG, 1)
   return {
-    sim: createSim(SIM_CONFIG, 1),
+    sim: initial,
+    forecast: forecastDepletion(initial, SIM_CONFIG),
     speed: 'normal',
     resourceTab: 'budget',
     notice: null,
@@ -99,8 +108,10 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     restart: () => {
       minuteAccumulator = 0
+      const sim = createSim(SIM_CONFIG, get().sim.seed + 1)
       set({
-        sim: createSim(SIM_CONFIG, get().sim.seed + 1),
+        sim,
+        forecast: forecastDepletion(sim, SIM_CONFIG),
         speaking: null,
         speechQueue: [],
         unread: {},
