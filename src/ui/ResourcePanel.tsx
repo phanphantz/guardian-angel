@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { RESOURCE_IDS, summarize, type Flow, type ResourceId, type ResourceStore, type ResourceSummary } from '../core/resources'
 import { computeFlows } from '../core/sim'
-import { formatHours, formatHoursLong, type Speed } from '../core/time'
+import { formatHoursLong, type Speed } from '../core/time'
 import { SIM_CONFIG, useGameStore, type ResourceTab } from '../state/gameStore'
 
 /** Resource colors are the only non-terminal hues in the HUD besides alerts. */
@@ -164,6 +164,31 @@ function drainPeriod(usagePerHour: number, capacity: number, speed: Speed): numb
   return speed === 'fast' ? Math.max(0.15, base / 3) : base
 }
 
+/** Only says something when the stock is moving: "Empty in…" while draining, "Full in…" on surplus. */
+function Eta({
+  level,
+  draining,
+  filling,
+  hoursLeft,
+  hoursToFull,
+  atCapacity,
+}: {
+  level: Urgency
+  draining: boolean
+  filling: boolean
+  hoursLeft: number
+  hoursToFull: number
+  atCapacity: boolean
+}) {
+  if (level === 'depleted') return <span className="gauge__eta negative">Depleted</span>
+  if (draining) {
+    return <span className="gauge__eta">Empty in {Number.isFinite(hoursLeft) ? formatHoursLong(hoursLeft) : '7+ days'}</span>
+  }
+  if (filling) return <span className="gauge__eta gauge__eta--fill">Full in {formatHoursLong(hoursToFull)}</span>
+  if (atCapacity) return <span className="gauge__eta gauge__eta--fill">Full</span>
+  return null
+}
+
 /**
  * Budget: a stock bar (fill vs empty) with a live draining edge, plus an OUT/IN flow
  * meter. Stock and rate are shown separately so neither has to be read off the other.
@@ -207,7 +232,6 @@ function BudgetGauge({
         </span>
         <span className="gauge__value">
           {tenth(store.stock)} / {whole(store.capacity)}
-          <span className="gauge__runway">{level === 'depleted' ? 'Depleted' : formatHours(hoursLeft)}</span>
         </span>
       </div>
 
@@ -245,9 +269,7 @@ function BudgetGauge({
         ) : (
           <span className={net < 0 ? 'negative' : net > 0 ? 'positive' : 'muted'}>{formatNet(net)} net</span>
         )}
-        <span className="gauge__eta">
-          {level === 'depleted' ? 'Out of stock' : emptyAt !== undefined ? `Empty in ${formatHoursLong(hoursLeft)}` : 'Lasts 7+ days'}
-        </span>
+        <Eta level={level} draining={draining} filling={filling} hoursLeft={hoursLeft} hoursToFull={(store.capacity - store.stock) / net} atCapacity={store.stock >= store.capacity && net > 0} />
       </div>
     </div>
   )

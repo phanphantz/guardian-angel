@@ -314,12 +314,6 @@ button {
   margin-left: auto;
 }
 
-.gauge__runway {
-  margin-left: var(--ga-space-2);
-  padding: 0 6px;
-  border: 1px solid var(--ga-green-dim);
-}
-
 .gauge__footer {
   display: flex;
   justify-content: space-between;
@@ -330,26 +324,18 @@ button {
   color: var(--ga-color-text-dim);
 }
 
-/* Urgency: < 24h amber, < 6h red + blink, depleted dim. */
-.gauge--warning .gauge__runway,
-.gauge--warning .gauge__eta {
-  color: var(--ga-color-warning);
-  border-color: var(--ga-color-warning);
-  text-shadow: 0 0 6px rgba(255, 176, 0, 0.5);
+/* Urgency (draining only): < 24h amber, < 6h red + blink, depleted dim. */
+.gauge__eta--fill {
+  color: var(--ga-green);
 }
 
-.gauge--critical .gauge__runway {
-  background: var(--ga-color-negative);
-  border-color: var(--ga-color-negative);
-  color: #000;
-  text-shadow: none;
+.gauge--warning .gauge__eta {
+  color: var(--ga-color-warning);
+  text-shadow: 0 0 6px rgba(255, 176, 0, 0.5);
 }
 
 .gauge--critical .gauge__eta {
   color: var(--ga-color-negative);
-}
-
-.gauge--critical .gauge__runway {
   animation: blink 1s steps(2, jump-none) infinite;
 }
 
@@ -363,15 +349,9 @@ button {
 }
 
 .gauge--depleted .gauge__title,
-.gauge--depleted .gauge__value,
-.gauge--depleted .legend-item {
+.gauge--depleted .gauge__value {
   color: var(--ga-green-dim);
   text-shadow: none;
-}
-
-.gauge--depleted .gauge__runway {
-  color: var(--ga-color-negative);
-  border-color: var(--ga-color-negative);
 }
 
 /* Stock bar: fill vs empty, with a live draining edge and a ghost of recent losses. */
